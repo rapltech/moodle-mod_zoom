@@ -328,7 +328,7 @@ function xmldb_zoom_upgrade($oldversion) {
     }
     //Resolve new 3 blocks into 1 blocks before creating PR
 
-    if ($oldversion < 2021070700) {
+    if ($oldversion < 2021071600) {
         //Define field registration_type to be added to zoom
         $table = new xmldb_table('zoom');
         $field = new xmldb_field('registration_type', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NULL, null, null);
@@ -370,7 +370,7 @@ function xmldb_zoom_upgrade($oldversion) {
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        upgrade_mod_savepoint(true, 2021070700, 'zoom');
+        upgrade_mod_savepoint(true, 2021071600, 'zoom');
     }
     return true;
 }
