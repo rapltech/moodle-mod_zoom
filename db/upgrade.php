@@ -331,7 +331,7 @@ function xmldb_zoom_upgrade($oldversion) {
     if ($oldversion < 2021070700) {
         //Define field registration_type to be added to zoom
         $table = new xmldb_table('zoom');
-        $field = new xmldb_field('registration_type', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
+        $field = new xmldb_field('registration_type', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NULL, null, null);
 
         // Conditionally launch add registration_type
         if (!$dbman->field_exists($table, $field)) {
