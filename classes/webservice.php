@@ -150,6 +150,10 @@ class mod_zoom_webservice {
             }
         }
 
+        if ($method == 'put') {
+            $response = $httpstatus;   
+        }
+
         return $response;
     }
 
@@ -338,6 +342,7 @@ class mod_zoom_webservice {
                 'auto_recording' => $zoom->auto_recording
             )
         );
+
         if ($zoom->webinar) {
             $data['type'] = $zoom->recurring ? ZOOM_RECURRING_WEBINAR : ZOOM_SCHEDULED_WEBINAR;
         } else {
@@ -368,10 +373,18 @@ class mod_zoom_webservice {
                 $data['settings']['authentication_domains'] = $config->auth_domain;
             }
         }
+
         if (isset($zoom->alternative_hosts)) {
             $data['settings']['alternative_hosts'] = $zoom->alternative_hosts;
         }
-
+        if(isset($zoom->registration_type) && $zoom->registration_type == 2) {
+            $data['settings']['registration_type'] = (int) $zoom->registration_type;
+            $data['settings']['approval_type'] = 1;
+            $data['settings']['registrants_email_notification'] = false;
+            $data['settings']['allow_multiple_devices'] = false;
+        }else {
+            $data['settings']['approval_type'] = 2;
+        }
         if ($data['type'] == ZOOM_SCHEDULED_MEETING
             || $data['type'] != ZOOM_RECURRING_MEETING
             || $data['type'] == ZOOM_SCHEDULED_WEBINAR
@@ -404,6 +417,48 @@ class mod_zoom_webservice {
         $url = "users/$zoom->host_id/" . ($zoom->webinar ? 'webinars' : 'meetings');
         return $this->_make_call($url, $this->_database_to_api($zoom), 'post');
     }
+
+    /**
+     * Add meeting registrants
+     *
+     * @param stdClass $zoom The meeting to create.
+     * @return stdClass The call response.
+     */
+    public function add_meeting_registrants($meeting_id, $first_name, $last_name, $email)
+    {
+
+        $payload['email'] = $email;
+        $payload['first_name'] = $first_name;
+        $payload['last_name'] = $last_name;
+
+        $payload = json_encode($payload);
+
+        $url = "meetings/$meeting_id/registrants";
+        return $this->_make_call($url, $payload, 'post');
+    }
+
+    /**
+     * Update meeting registrants
+     *
+     */
+    public function update_registrants_status($payload, $meeting_id)
+    {
+        $url = "meetings/$meeting_id/registrants/status";
+        return $this->_make_call($url, $payload, 'put');
+    }
+
+    /**
+     * Get list of user registered based on meeting_id
+     *  This function will get zoom meeting ID from database
+     *
+     */
+
+    public function get_meeting_registrants($meeting_id)
+    {
+        $url = "meetings/$meeting_id/registrants";
+        return $this->_make_call($url, '', 'get');
+    }
+
 
     /**
      * Update a meeting/webinar on Zoom.

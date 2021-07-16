@@ -326,5 +326,51 @@ function xmldb_zoom_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 2019121701, 'zoom');
     }
+    //Resolve new 3 blocks into 1 blocks before creating PR
+
+    if ($oldversion < 2021070700) {
+        //Define field registration_type to be added to zoom
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('registration_type', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
+
+        // Conditionally launch add registration_type
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        //Create a table to store registrants
+        $table = new xmldb_table('zoom_meeting_registrant');
+
+        //Adding field to table zoom_meeting_registrant
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('meeting_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('email', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL);
+        $table->add_field('first_name', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL);
+        $table->add_field('last_name', XMLDB_TYPE_CHAR, '20', null, null);
+        $table->add_field('join_url', XMLDB_TYPE_TEXT, 'long', null, XMLDB_NULL);
+        $table->add_field('registrant_id', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL);
+        $table->add_field('start_time', XMLDB_TYPE_CHAR, '60', null, XMLDB_NOTNULL);
+        $table->add_field('topic', XMLDB_TYPE_CHAR, '300', null, XMLDB_NOTNULL);
+        $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL);
+        $table->add_field('created_at', XMLDB_TYPE_DATETIME, '50', null, XMLDB_NOTNULL);
+
+        //Adding keys to table zoom_meeting_registrants
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        //Conditionally launch create table for zoom_meeting_registrant
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define new field programid into mdl_zoom table.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('program_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Conditionally launch add program_id
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2021070700, 'zoom');
+    }
     return true;
 }

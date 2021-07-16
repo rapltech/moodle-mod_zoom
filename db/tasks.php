@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$tasks = array(
-    array(
+$tasks = [
+    [
         'classname' => 'mod_zoom\task\update_meetings',
         'blocking' => 0,
         'minute' => '0',
@@ -33,8 +33,8 @@ $tasks = array(
         'day' => '*',
         'month' => '*',
         'dayofweek' => '*'
-    ),
-    array(
+    ],
+    [
         'classname' => 'mod_zoom\task\get_meeting_reports',
         'blocking' => 0,
         'minute' => '0',
@@ -42,8 +42,8 @@ $tasks = array(
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
-    ),
-    array(
+    ],
+    [
         'classname' => 'mod_zoom\task\reset_api_calls',
         'blocking' => 0,
         'minute' => '59',
@@ -51,8 +51,8 @@ $tasks = array(
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
-    ),
-    array(
+    ],
+    [
         'classname' => 'mod_zoom\task\send_notifications',
         'blocking' => 0,
         'minute' => '*/15',
@@ -60,8 +60,8 @@ $tasks = array(
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
-    ),
-    array(
+    ],
+    [
         'classname' => 'mod_zoom\task\insert_recordings',
         'blocking' => 0,
         'minute' => '*/30',
@@ -69,5 +69,23 @@ $tasks = array(
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
-    )
-);
+    ],
+    [
+        'classname' => 'mod_zoom\task\add_meeting_registrant',
+        'blocking' => 0,
+        'minute' => '*/10',
+        'hour' => '*',
+        'day' => '*',
+        'dayofweek' => '*',
+        'month' => '*'
+    ],
+    [
+        'classname' => 'mod_zoom\task\clear_registrant',
+        'blocking' => 0,
+        'minute' => '*/11',
+        'hour' => '*',
+        'day' => '*',
+        'dayofweek' => '*',
+        'month' => '*'
+    ]
+];
