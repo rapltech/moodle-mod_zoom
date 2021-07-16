@@ -73,7 +73,7 @@ $tasks = [
     [
         'classname' => 'mod_zoom\task\add_meeting_registrant',
         'blocking' => 0,
-        'minute' => '*',
+        'minute' => '*/10',
         'hour' => '*',
         'day' => '*',
         'dayofweek' => '*',
@@ -82,7 +82,7 @@ $tasks = [
     [
         'classname' => 'mod_zoom\task\clear_registrant',
         'blocking' => 0,
-        'minute' => '*',
+        'minute' => '*/11',
         'hour' => '*',
         'day' => '*',
         'dayofweek' => '*',
