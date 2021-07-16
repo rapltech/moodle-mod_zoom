@@ -334,7 +334,7 @@ function xmldb_zoom_upgrade($oldversion) {
         $field = new xmldb_field('registration_type', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
 
         // Conditionally launch add registration_type
-        if(!$dbman->field_exists($table, $field)) {
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
@@ -358,7 +358,7 @@ function xmldb_zoom_upgrade($oldversion) {
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
 
         //Conditionally launch create table for zoom_meeting_registrant
-        if(!$dbman->table_exists($table)) {
+        if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }
 
@@ -367,7 +367,7 @@ function xmldb_zoom_upgrade($oldversion) {
         $field = new xmldb_field('program_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
 
         // Conditionally launch add program_id
-        if(!$dbman->field_exists($table, $field)) {
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
         upgrade_mod_savepoint(true, 2021070700, 'zoom');

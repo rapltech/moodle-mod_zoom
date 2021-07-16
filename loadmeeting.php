@@ -112,9 +112,9 @@ if ($userishost) {
                     $response = $service->add_meeting_registrants($user->meeting_id, $user->firstname, $user->lastname, $user->email);
 
                     if (!empty($response)) {
-                            $queryToInsertRegistrant = "INSERT INTO `mdl_zoom_meeting_registrant` (meeting_id, email, first_name, last_name, registrant_id, start_time, topic, status, created_at)
+                        $queryToInsertRegistrant = "INSERT INTO `mdl_zoom_meeting_registrant` (meeting_id, email, first_name, last_name, registrant_id, start_time, topic, status, created_at)
                                                 VALUES ($user->meeting_id, '$user->email', '$user->firstname', '$user->lastname', '$response->registrant_id', '$response->start_time', '$response->topic', 'PENDING', now())";
-                            $DB->execute($queryToInsertRegistrant);
+                        $DB->execute($queryToInsertRegistrant);
 
                         $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $user->meeting_id";
                         $registrantDetails = $DB->get_records_sql($getRegistrantDetails);
@@ -144,9 +144,9 @@ if ($userishost) {
 
                     $queryToGetPendingStatusMeeting = "SELECT DISTINCT(meeting_id) FROM `mdl_zoom_meeting_registrant` WHERE status = 'PENDING'";
                     $meetingIdList = $DB->get_records_sql($queryToGetPendingStatusMeeting);
-                    foreach($meetingIdList as $meeting) {
+                    foreach ($meetingIdList as $meeting) {
                         $updateMeetingRegistrantStatus = $service->update_registrants_status($requestPayload, $meeting->meeting_id);
-                    
+
                         if ($updateMeetingRegistrantStatus == 204) {
                             try {
                                 $meetingRegistrantList = $service->get_meeting_registrants($meeting->meeting_id);

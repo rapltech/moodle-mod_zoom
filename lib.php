@@ -73,7 +73,7 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     $zoom->course = (int) $zoom->course;
     $zoom->user_id = (int) $USER->id;
 
-    if($zoom->registration_type == "1") {
+    if ($zoom->registration_type == "1") {
         $zoom->registration_type = 2;
     }
 

@@ -420,11 +420,12 @@ class mod_zoom_webservice {
 
     /**
      * Add meeting registrants
-     * 
+     *
      * @param stdClass $zoom The meeting to create.
      * @return stdClass The call response.
      */
-    public function add_meeting_registrants($meeting_id, $first_name, $last_name, $email) {
+    public function add_meeting_registrants($meeting_id, $first_name, $last_name, $email)
+    {
 
         $payload['email'] = $email;
         $payload['first_name'] = $first_name;
@@ -438,9 +439,10 @@ class mod_zoom_webservice {
 
     /**
      * Update meeting registrants
-     * 
+     *
      */
-    public function update_registrants_status($payload, $meeting_id){ 
+    public function update_registrants_status($payload, $meeting_id)
+    {
         $url = "meetings/$meeting_id/registrants/status";
         return $this->_make_call($url, $payload, 'put');
     }
@@ -448,10 +450,11 @@ class mod_zoom_webservice {
     /**
      * Get list of user registered based on meeting_id
      *  This function will get zoom meeting ID from database
-     * 
+     *
      */
 
-    public function get_meeting_registrants($meeting_id) {
+    public function get_meeting_registrants($meeting_id)
+    {
         $url = "meetings/$meeting_id/registrants";
         return $this->_make_call($url, '', 'get');
     }

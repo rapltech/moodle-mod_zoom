@@ -3,37 +3,39 @@
 namespace mod_zoom\task;
 
 defined('MOODLE_INTERNAL') || die();
+
 /**
  * Schedule task to add meeting registrant
- * 
+ *
  * @package mod_zoom
  * @author Ashish Srivastav <ashish@linkstreet.in>
  */
-
-class add_meeting_registrant extends \core\task\scheduled_task {
+class add_meeting_registrant extends \core\task\scheduled_task
+{
     /**
      * Return name of the task
-     * 
+     *
      * @return boolean
      */
-    public function get_name() {
+    public function get_name()
+    {
         return get_string("add_meeting_registrant", "zoom");
     }
 
     /**
      * Approve registrants to join the meeting
-     * 
+     *
      */
 
-    public function execute() {
+    public function execute()
+    {
         global $CFG, $DB;
 
-        require_once($CFG->dirroot.'/mod/zoom/locallib.php');
-        require_once($CFG->dirroot.'/lib/modinfolib.php');
-        require_once($CFG->dirroot.'/mod/zoom/lib.php');
-        require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
-        
-        
+        require_once($CFG->dirroot . '/mod/zoom/locallib.php');
+        require_once($CFG->dirroot . '/lib/modinfolib.php');
+        require_once($CFG->dirroot . '/mod/zoom/lib.php');
+        require_once($CFG->dirroot . '/mod/zoom/classes/webservice.php');
+
         $service = new \mod_zoom_webservice();
         $queryToGetMeetingAndStudentDetails = "SELECT u.id, c.id AS 'program_id', mz.meeting_id, u.firstname, u.lastname, u.email
         FROM mdl_user u
@@ -49,16 +51,16 @@ class add_meeting_registrant extends \core\task\scheduled_task {
         AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) AND ue.status = 0";
         $meetingEnrolledUser = $DB->get_records_sql($queryToGetMeetingAndStudentDetails);
 
-        foreach($meetingEnrolledUser as $data) {
+        foreach ($meetingEnrolledUser as $data) {
             try {
 
                 $response = $service->add_meeting_registrants($data->meeting_id, $data->firstname, $data->lastname, $data->email);
-                if(!empty($response)) {
+                if (!empty($response)) {
 
                     $queryToInsertRegistrant = "INSERT INTO `mdl_zoom_meeting_registrant` (meeting_id, email, first_name, last_name, registrant_id, start_time, topic, status, created_at)
                                                 VALUES ($data->meeting_id, '$data->email', '$data->firstname', '$data->lastname', '$response->registrant_id', '$response->start_time', '$response->topic', 'PENDING', now())";
                     $DB->execute($queryToInsertRegistrant);
-                
+
                     $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $data->meeting_id";
                     $registrantDetails = $DB->get_records_sql($getRegistrantDetails);
 
@@ -66,34 +68,34 @@ class add_meeting_registrant extends \core\task\scheduled_task {
                     $requestPayload["action"] = "approve";
                     $requestPayload["registrants"] = [];
                     $registrants = [];
-                    foreach($registrantDetails as $rData) {
-                            $temp = [
-                                "id" => "$rData->id",
-                                "email" => "$rData->email"
-                            ];
-                            array_push($registrants, $temp);
+                    foreach ($registrantDetails as $rData) {
+                        $temp = [
+                            "id" => "$rData->id",
+                            "email" => "$rData->email"
+                        ];
+                        array_push($registrants, $temp);
                     }
                 }
-                   
-            }catch(\moodle_exception $error) {
+
+            } catch (\moodle_exception $error) {
                 mtrace('Add meeting registrant failed: ' . $error);
             }
         }
-        if(!empty($registrants)) {
+        if (!empty($registrants)) {
             try {
                 $requestPayload["registrants"] = $registrants;
                 $requestPayload = json_encode($requestPayload);
-            
+
                 $queryToGetPendingStatusMeeting = "SELECT DISTINCT(meeting_id) FROM `mdl_zoom_meeting_registrant` WHERE status = 'PENDING'";
                 $meetingIdList = $DB->get_records_sql($queryToGetPendingStatusMeeting);
 
-                foreach($meetingIdList as $meeting){ 
+                foreach ($meetingIdList as $meeting) {
                     $updateMeetingRegistrantStatus = $service->update_registrants_status($requestPayload, $meeting->meeting_id);
-                    if ($updateMeetingRegistrantStatus == 204) {    
+                    if ($updateMeetingRegistrantStatus == 204) {
                         try {
                             $meetingRegistrantList = $service->get_meeting_registrants($meeting->meeting_id);
-    
-                            foreach($meetingRegistrantList->registrants as $data) {
+
+                            foreach ($meetingRegistrantList->registrants as $data) {
                                 if ($data->status == "approved") {
                                     $join_url = urlencode($data->join_url);
                                     $updateStatusAndJoinUrl = "UPDATE `mdl_zoom_meeting_registrant`
