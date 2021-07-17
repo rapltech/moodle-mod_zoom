@@ -377,8 +377,8 @@ class mod_zoom_webservice {
         if (isset($zoom->alternative_hosts)) {
             $data['settings']['alternative_hosts'] = $zoom->alternative_hosts;
         }
-        if(isset($zoom->registration_type) && $zoom->registration_type == 2) {
-            $data['settings']['registration_type'] = (int) $zoom->registration_type;
+        if(isset($zoom->registration_flag) && $zoom->registration_flag == 1) {
+            $data['settings']['registration_type'] = 2;
             $data['settings']['approval_type'] = 1;
             $data['settings']['registrants_email_notification'] = false;
             $data['settings']['allow_multiple_devices'] = false;

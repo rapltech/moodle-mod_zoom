@@ -67,7 +67,7 @@ if ($userishost) {
 
         zoom_grade_item_update($zoom, $grades);
     }
-    if ($zoom->registration_type == 2) {
+    if ($zoom->registration_flag == 1) {
         $queryToFindJoinUrl = "SELECT join_url FROM `mdl_zoom_meeting_registrant`
         WHERE email = (SELECT email FROM `mdl_user` WHERE id = $USER->id)
         AND meeting_id = $zoom->meeting_id";
@@ -88,7 +88,7 @@ if ($userishost) {
           JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50
           JOIN mdl_course c ON c.id = ct.instanceid AND e.courseid = c.id
           JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student'
-          JOIN mdl_zoom mz ON mz.program_id = c.id AND mz.registration_type = 2
+          JOIN mdl_zoom mz ON mz.program_id = c.id AND mz.registration_flag = 1
         WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0
         AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) AND ue.status = 0
         AND NOT EXISTS(SELECT 1 FROM mdl_user u2
@@ -98,7 +98,7 @@ if ($userishost) {
                                     JOIN mdl_context ct2 ON ct2.id = ra2.contextid
                                     JOIN mdl_course c2 ON c2.id = ct2.instanceid and e2.courseid = c2.id
                                     JOIN mdl_role r2 ON r2.id = ra2.roleid AND r2.shortname = 'student'
-                                    JOIN mdl_zoom mz2 ON mz2.program_id = c2.id AND mz2.registration_type = 2
+                                    JOIN mdl_zoom mz2 ON mz2.program_id = c2.id AND mz2.registration_flag = 1
                   WHERE u2.id = u.id
                     AND e2.status = 0 AND u2.suspended = 0 AND u2.deleted = 0
                     AND (ue2.timeend = 0 OR ue2.timeend > UNIX_TIMESTAMP(NOW()))
