@@ -331,12 +331,16 @@ function xmldb_zoom_upgrade($oldversion) {
     if ($oldversion < 2021071600) {
         //Define field registration_type to be added to zoom
         $table = new xmldb_table('zoom');
-        $field = new xmldb_field('registration_type', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NULL, null, null);
+        $field = new xmldb_field('registration_type', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
 
         // Conditionally launch add registration_type
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
+
+        // Query to add default value for registration_type
+        $defaultQuery1 = "ALTER TABLE {zoom} ALTER registration_type SET DEFAULT 0";
+        $DB->execute($defaultQuery1);
 
         //Create a table to store registrants
         $table = new xmldb_table('zoom_meeting_registrant');
