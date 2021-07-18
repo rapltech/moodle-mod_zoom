@@ -67,7 +67,7 @@ if ($userishost) {
 
         zoom_grade_item_update($zoom, $grades);
     }
-    if ($zoom->registration_flag == 1) {
+    if ($zoom->enable_regisration == 1) {
         $queryToFindJoinUrl = "SELECT join_url FROM `mdl_zoom_meeting_registrant`
         WHERE email = (SELECT email FROM `mdl_user` WHERE id = $USER->id)
         AND meeting_id = $zoom->meeting_id";
@@ -88,11 +88,12 @@ if ($userishost) {
               JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50
               JOIN mdl_course c ON c.id = ct.instanceid AND e.courseid = c.id
               JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student'
-              JOIN mdl_zoom mz ON mz.course = c.id AND mz.registration_flag = 1
+              JOIN mdl_zoom mz ON mz.course = c.id
               JOIN mdl_zoom_meeting_registrant zmr ON zmr.meeting_id = mz.meeting_id AND zmr.email != u.email
      WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0
        AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) AND ue.status = 0
        AND c.id = $course->id
+       AND mz.enable_regisration = 1
        AND NOT EXISTS(SELECT 1 FROM mdl_user u2
                                         JOIN mdl_user_enrolments ue2 ON ue2.userid = u2.id
                                         JOIN mdl_enrol e2 ON e2.id = ue2.enrolid
@@ -100,7 +101,7 @@ if ($userishost) {
                                         JOIN mdl_context ct2 ON ct2.id = ra2.contextid
                                         JOIN mdl_course c2 ON c2.id = ct2.instanceid and e2.courseid = c2.id
                                         JOIN mdl_role r2 ON r2.id = ra2.roleid AND r2.shortname = 'student'
-                                        JOIN mdl_zoom mz2 ON mz2.course = c2.id AND mz2.registration_flag = 1
+                                        JOIN mdl_zoom mz2 ON mz2.course = c2.id
                                          JOIN mdl_zoom_meeting_registrant zmr ON zmr.meeting_id = mz2.meeting_id AND zmr.email = u2.email
                       WHERE u2.id = u.id
                         AND e2.status = 0 AND u2.suspended = 0 AND u2.deleted = 0
@@ -108,7 +109,8 @@ if ($userishost) {
                         AND ct2.contextlevel = 50
                         AND ue2.status = 0
                         AND c2.id =c.id
-                        AND c2.enddate = c.enddate)";
+                        AND c2.enddate = c.enddate)
+                        AND mz2.enable_regisration = 1";
             $meetingEnrolledUser = $DB->get_records_sql($queryToGetMeetingAndStudentDetails);
             foreach ($meetingEnrolledUser as $user) {
                 try {
