@@ -45,10 +45,11 @@ class add_meeting_registrant extends \core\task\scheduled_task
                  JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50
                  JOIN mdl_course c ON c.id = ct.instanceid and e.courseid = c.id
                  JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student'
-                 JOIN mdl_zoom mz ON mz.course = c.id AND mz.registration_flag = 1
+                 JOIN mdl_zoom mz ON mz.course = c.id
                 AND mz.meeting_id NOT IN (SELECT meeting_id FROM mdl_zoom_meeting_registrant)
         WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0
-        AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) AND ue.status = 0";
+        AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) AND ue.status = 0
+        AND mz.registration_flag = 1";
         $meetingEnrolledUser = $DB->get_records_sql($queryToGetMeetingAndStudentDetails);
 
         foreach ($meetingEnrolledUser as $data) {
