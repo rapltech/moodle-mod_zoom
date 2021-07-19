@@ -114,6 +114,7 @@ class mod_zoom_mod_form extends moodleform_mod {
         // Add user registration
         $mform->addElement('advcheckbox', 'enable_registration', 'Registration');
         $mform->setDefault('enable_registration', $config->defacultregistrationtype);
+        $mform->disabledIf('enable_registration', 'webinar', 'notchecked');
 
         // Repeat type
         $meeting_types = [
