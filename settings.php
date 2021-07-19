@@ -88,7 +88,7 @@ if ($ADMIN->fulltree) {
     $settings->add($defaultrecurring);
 
     $defacultregistrationtype = new admin_setting_configcheckbox('mod_zoom/defacultregistrationtype', get_string('enable_registration', 'zoom'), 
-            '', 1, 1, 1);
+            '', 1, 0, 1);
     $settings->add($defacultregistrationtype);
 
     $defaulthostvideo = new admin_setting_configcheckbox('mod_zoom/defaulthostvideo', get_string('option_host_video', 'zoom'),
