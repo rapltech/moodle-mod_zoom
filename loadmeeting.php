@@ -67,7 +67,7 @@ if ($userishost) {
 
         zoom_grade_item_update($zoom, $grades);
     }
-    if ($zoom->enable_regisration == 1) {
+    if ($zoom->enable_registration == 1) {
         $queryToFindJoinUrl = "SELECT join_url FROM `mdl_zoom_meeting_registrant`
         WHERE email = (SELECT email FROM `mdl_user` WHERE id = $USER->id)
         AND meeting_id = $zoom->meeting_id";
@@ -93,7 +93,7 @@ if ($userishost) {
      WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0
        AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) AND ue.status = 0
        AND c.id = $course->id
-       AND mz.enable_regisration = 1
+       AND mz.enable_registration = 1
        AND NOT EXISTS(SELECT 1 FROM mdl_user u2
                                         JOIN mdl_user_enrolments ue2 ON ue2.userid = u2.id
                                         JOIN mdl_enrol e2 ON e2.id = ue2.enrolid
@@ -110,7 +110,7 @@ if ($userishost) {
                         AND ue2.status = 0
                         AND c2.id =c.id
                         AND c2.enddate = c.enddate)
-                        AND mz2.enable_regisration = 1";
+                        AND mz2.enable_registration = 1";
             $meetingEnrolledUser = $DB->get_records_sql($queryToGetMeetingAndStudentDetails);
             foreach ($meetingEnrolledUser as $user) {
                 try {

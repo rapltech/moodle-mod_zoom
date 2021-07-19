@@ -330,17 +330,17 @@ function xmldb_zoom_upgrade($oldversion) {
 
     if ($oldversion < 20210718005) {
        
-        //Define field enable_regisration to be added to zoom
+        //Define field enable_registration to be added to zoom
         $table = new xmldb_table('zoom');
-        $field = new xmldb_field('enable_regisration', XMLDB_TYPE_INTEGER, '1', XMLDB_NOTNULL);
+        $field = new xmldb_field('enable_registration', XMLDB_TYPE_INTEGER, '1', XMLDB_NOTNULL);
 
-        // Conditionally launch add enable_regisration
+        // Conditionally launch add enable_registration
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        //Query to add default value for enable_regisration
-        $defaultQuery1 = "ALTER TABLE {zoom} ALTER enable_regisration SET DEFAULT 0";
+        //Query to add default value for enable_registration
+        $defaultQuery1 = "ALTER TABLE {zoom} ALTER enable_registration SET DEFAULT 0";
         $DB->execute($defaultQuery1);
 
         //Create a table to store registrants
