@@ -73,10 +73,6 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     $zoom->course = (int) $zoom->course;
     $zoom->user_id = (int) $USER->id;
 
-    if ($zoom->registration_type == "1") {
-        $zoom->registration_type = 2;
-    }
-
     $service = new mod_zoom_webservice();
     $response = $service->create_meeting($zoom);
     $zoom = populate_zoom_from_response($zoom, $response);
@@ -107,9 +103,6 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     $zoom->id = $zoom->instance;
     $zoom->timemodified = time();
 
-    if($zoom->registration_type == "1") {
-        $zoom->registration_type = 2;
-    }
     
     $DB->update_record('zoom', $zoom);
 

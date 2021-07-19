@@ -24,7 +24,7 @@ class clear_registrant extends \core\task\scheduled_task
         $queryToGetMeeting = "SELECT GROUP_CONCAT(mdl_zoom_meeting_registrant.meeting_id) AS 'meetingid'
         FROM mdl_zoom_meeting_registrant
                  JOIN mdl_zoom on mdl_zoom_meeting_registrant.meeting_id = mdl_zoom.meeting_id
-        WHERE mdl_zoom.registration_type = 0";
+        WHERE mdl_zoom.enable_registration = 0";
         $meetingList = $DB->get_record_sql($queryToGetMeeting);
 
         if ($meetingList->meetingid != null) {
