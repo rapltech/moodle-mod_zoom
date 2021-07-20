@@ -87,9 +87,9 @@ if ($ADMIN->fulltree) {
             get_string('recurringmeeting_help', 'zoom'), 0, 1, 0);
     $settings->add($defaultrecurring);
 
-    $defacultregistrationtype = new admin_setting_configcheckbox('mod_zoom/defacultregistrationtype', get_string('enable_registration', 'zoom'), 
+    $registrationswitch = new admin_setting_configcheckbox('mod_zoom/registrationswitch', get_string('enable_registration_switch', 'zoom'), 
             '', 1, 0, 1);
-    $settings->add($defacultregistrationtype);
+    $settings->add($registrationswitch);
 
     $defaulthostvideo = new admin_setting_configcheckbox('mod_zoom/defaulthostvideo', get_string('option_host_video', 'zoom'),
             '', 1, 1, 0);
