@@ -109,6 +109,7 @@ $string['on'] = 'On';
 $string['option_audio'] = 'Audio options';
 $string['option_host_video'] = 'Host video';
 $string['enable_registration'] = 'Registration';
+$string['enable_registration_switch'] = 'Registration switch';
 $string['add_meeting_registrant'] = "approve meeting registrants";
 $string['option_jbh'] = 'Enable join before host';
 $string['option_mute_upon_entry'] = 'Mute attendees upon entry';

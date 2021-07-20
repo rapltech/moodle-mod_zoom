@@ -111,9 +111,11 @@ class mod_zoom_mod_form extends moodleform_mod {
 
         $mform->addElement('advcheckbox', 'recurring', 'Recurring');
 
-        // Add user registration
-        $mform->addElement('advcheckbox', 'enable_registration', 'Registration');
-        $mform->setDefault('enable_registration', $config->defacultregistrationtype);
+        if($config->registrationswitch == 1) {
+            // Add user registration
+            $mform->addElement('advcheckbox', 'enable_registration', 'Registration');
+            $mform->setDefault('enable_registration', $config->registrationswitch);
+        }
 
         // Repeat type
         $meeting_types = [
