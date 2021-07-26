@@ -80,7 +80,6 @@ if ($userishost) {
             $nexturl = new moodle_url($joinUrl);
         } else {
             $queryToGetUserDetails = "SELECT DISTINCT(u.id), c.id AS 'program_id',
-            mz.meeting_id,
             u.firstname, u.lastname, u.email
             FROM mdl_user u
                     JOIN mdl_user_enrolments ue ON ue.userid = u.id
