@@ -101,7 +101,7 @@ if ($userishost) {
             $queryToGetSiteAdmin = "SELECT u.id, u.firstname, u.lastname, u.email FROM mdl_user u WHERE u.id = $USER->id AND u.id IN(SELECT `value` FROM `mdl_config` WHERE `name` LIKE 'siteadmins')";
             $adminList = $DB->get_records_sql($queryToGetSiteAdmin);
             if(!empty($meetingEnrolledUser)) {
-                registerEnrolledUser($meetingEnrolledUser);
+                registerUser($meetingEnrolledUser, $zoom->meeting_id);
                 
                 $queryToFindJoinUrl = "SELECT join_url FROM `mdl_zoom_meeting_registrant` 
                 WHERE email = (SELECT email FROM `mdl_user` WHERE id = $USER->id)
@@ -112,7 +112,7 @@ if ($userishost) {
             }
             
             if(!empty($adminList)) {
-                registerAdmin($adminList, $zoom->meeting_id);
+                registerUser($adminList, $zoom->meeting_id);
 
                 $queryToFindJoinUrl = "SELECT join_url FROM `mdl_zoom_meeting_registrant` 
                 WHERE email = (SELECT email FROM `mdl_user` WHERE id = $USER->id)
