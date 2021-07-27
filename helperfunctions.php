@@ -37,12 +37,12 @@ function registerUser($enrolledUser, $meeting_id) {
         }
     }
     if(!empty($response)) {
-        updateMeetingRegistrants($registrants, $meeting_id, $service, $DB);
+        updateMeetingRegistrants($service, $DB, $registrants, $meeting_id);
     }
 }
 
 
-function updateMeetingRegistrants($registrants, $meeting_id, $service, $DB) {
+function updateMeetingRegistrants($service, $DB, $registrants, $meeting_id) {
     if(!empty($registrants)) {
         try {
             $requestPayload = [];
@@ -53,7 +53,7 @@ function updateMeetingRegistrants($registrants, $meeting_id, $service, $DB) {
             $updateMeetingRegistrantStatus = $service->update_registrants_status($requestPayload, $meeting_id);
 
             if ($updateMeetingRegistrantStatus == 204) {
-                getRegistrantDetails($meeting_id, $service, $DB);
+                syncRegistrantDetails($service, $DB, $meeting_id);
             } else {
                 mtrace('update_registrants_status API returned status code as: ' . $updateMeetingRegistrantStatus);
             }
@@ -66,7 +66,7 @@ function updateMeetingRegistrants($registrants, $meeting_id, $service, $DB) {
     }
 }
 
-function getRegistrantDetails($meeting_id, $service, $DB) {
+function syncRegistrantDetails($service, $DB, $meeting_id) {
     try {
         $meetingRegistrantList = $service->get_meeting_registrants($meeting_id);
         foreach ($meetingRegistrantList->registrants as $data) {
