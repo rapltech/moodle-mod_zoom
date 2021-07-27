@@ -35,6 +35,7 @@ class add_meeting_registrant extends \core\task\scheduled_task
         require_once($CFG->dirroot . '/lib/modinfolib.php');
         require_once($CFG->dirroot . '/mod/zoom/lib.php');
         require_once($CFG->dirroot . '/mod/zoom/classes/webservice.php');
+        require_once($CFG->dirroot . '/mod/zoom/helperfunctions.php');
 
         $service = new \mod_zoom_webservice();
         $queryToGetMeetingAndStudentDetails = "SELECT u.id, c.id AS 'program_id', mz.meeting_id, u.firstname, u.lastname, u.email
@@ -46,7 +47,7 @@ class add_meeting_registrant extends \core\task\scheduled_task
                  JOIN mdl_course c ON c.id = ct.instanceid and e.courseid = c.id
                  JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student'
                  JOIN mdl_zoom mz ON mz.course = c.id
-                AND mz.meeting_id NOT IN (SELECT meeting_id FROM mdl_zoom_meeting_registrant)
+            AND u.email NOT IN (SELECT zmr.email FROM mdl_zoom_meeting_registrant zmr)
         WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0
         AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) AND ue.status = 0
         AND mz.enable_registration = 1
@@ -63,12 +64,9 @@ class add_meeting_registrant extends \core\task\scheduled_task
                                                 VALUES ($data->meeting_id, '$data->email', '$data->firstname', '$data->lastname', '$response->registrant_id', '$response->start_time', '$response->topic', 'PENDING', now())";
                     $DB->execute($queryToInsertRegistrant);
 
-                    $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $data->meeting_id";
+                    $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $data->meeting_id AND status = 'PENDING'";
                     $registrantDetails = $DB->get_records_sql($getRegistrantDetails);
 
-                    $requestPayload = [];
-                    $requestPayload["action"] = "approve";
-                    $requestPayload["registrants"] = [];
                     $registrants = [];
                     foreach ($registrantDetails as $rData) {
                         $temp = [
@@ -82,37 +80,10 @@ class add_meeting_registrant extends \core\task\scheduled_task
             } catch (\moodle_exception $error) {
                 mtrace('Add meeting registrant failed: ' . $error);
             }
-        }
-        if (!empty($registrants)) {
-            try {
-                $requestPayload["registrants"] = $registrants;
-                $requestPayload = json_encode($requestPayload);
-
-                $queryToGetPendingStatusMeeting = "SELECT DISTINCT(meeting_id) FROM `mdl_zoom_meeting_registrant` WHERE status = 'PENDING'";
-                $meetingIdList = $DB->get_records_sql($queryToGetPendingStatusMeeting);
-
-                foreach ($meetingIdList as $meeting) {
-                    $updateMeetingRegistrantStatus = $service->update_registrants_status($requestPayload, $meeting->meeting_id);
-                    if ($updateMeetingRegistrantStatus == 204) {
-                        try {
-                            $meetingRegistrantList = $service->get_meeting_registrants($meeting->meeting_id);
-
-                            foreach ($meetingRegistrantList->registrants as $data) {
-                                if ($data->status == "approved") {
-                                    $join_url = urlencode($data->join_url);
-                                    $updateStatusAndJoinUrl = "UPDATE `mdl_zoom_meeting_registrant`
-                                        SET join_url = '$join_url', status = '$data->status'  
-                                        WHERE email = '$data->email' AND meeting_id = $meeting->meeting_id";
-                                    $DB->execute($updateStatusAndJoinUrl);
-                                }
-                            }
-                        } catch (\moodle_exception $error) {
-                            mtrace('Failed to get meeting registrants: ' . $error);
-                        }
-                    }
-                }
-            } catch (\moodle_exception $error) {
-                mtrace('Update meeting registrant status: ' . $error);
+            if (!empty($registrants)) {
+                updateMeetingRegistrants($service, $DB, $registrants, $data->meeting_id);
+            } else {
+                mtrace("Update Meeting Registrant Failed");
             }
         }
     }
