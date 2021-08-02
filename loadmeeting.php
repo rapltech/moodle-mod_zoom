@@ -98,7 +98,7 @@ if ($userishost) {
             AND mz.enable_registration = 1";
             $meetingEnrolledUser = $DB->get_records_sql($queryToGetUserDetails);
 
-            $queryToGetSiteAdmin = "SELECT *
+            $queryToGetSiteAdmin = "SELECT user.id, user.firstname, user.lastname, user.email
             FROM mdl_user user, mdl_config cfg
             WHERE cfg.name = 'siteadmins'
             AND FIND_IN_SET(user.id, cfg.value) > 0
