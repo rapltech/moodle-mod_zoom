@@ -98,7 +98,11 @@ if ($userishost) {
             AND mz.enable_registration = 1";
             $meetingEnrolledUser = $DB->get_records_sql($queryToGetUserDetails);
 
-            $queryToGetSiteAdmin = "SELECT u.id, u.firstname, u.lastname, u.email FROM mdl_user u WHERE u.id = $USER->id AND u.id IN(SELECT `value` FROM `mdl_config` WHERE `name` LIKE 'siteadmins')";
+            $queryToGetSiteAdmin = "SELECT user.id, user.firstname, user.lastname, user.email
+            FROM mdl_user user, mdl_config cfg
+            WHERE cfg.name = 'siteadmins'
+            AND FIND_IN_SET(user.id, cfg.value) > 0
+            AND user.id = $USER->id";
             $adminList = $DB->get_records_sql($queryToGetSiteAdmin);
             if(!empty($meetingEnrolledUser)) {
                 registerUser($meetingEnrolledUser, $zoom->meeting_id);
