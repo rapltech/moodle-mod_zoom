@@ -373,5 +373,18 @@ function xmldb_zoom_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 20210718005, 'zoom');
     }
+    if($oldversion < 20210727000) {
+        // Alter column to change length
+        $alterFirstName = "ALTER TABLE {zoom_meeting_registrant} MODIFY COLUMN first_name varchar(100)";
+        $DB->execute($alterFirstName);
+
+        $alterLastName = "ALTER TABLE {zoom_meeting_registrant} MODIFY COLUMN last_name varchar(100)";
+        $DB->execute($alterLastName);
+
+        $alterEmail = "ALTER TABLE {zoom_meeting_registrant} MODIFY COLUMN email varchar(100)";
+        $DB->execute($alterEmail);
+
+        upgrade_mod_savepoint(true, 20210727000, 'zoom');
+    }
     return true;
 }
