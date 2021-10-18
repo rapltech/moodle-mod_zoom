@@ -14,9 +14,18 @@ function registerUser($enrolledUser, $meeting_id) {
             $response = $service->add_meeting_registrants($meeting_id, $user->firstname, $user->lastname, $user->email);
 
             if (!empty($response)) {
-                $queryToInsertRegistrant = "INSERT INTO `mdl_zoom_meeting_registrant` (meeting_id, email, first_name, last_name, registrant_id, start_time, topic, status, created_at)
-                                        VALUES ($meeting_id, '$user->email', '$user->firstname', '$user->lastname', '$response->registrant_id', '$response->start_time', '$response->topic', 'PENDING', now())";
-                $DB->execute($queryToInsertRegistrant);
+
+                $insertRegistrant['meeting_id'] = $user->meeting_id;
+                $insertRegistrant['email'] = "$user->email";
+                $insertRegistrant['first_name'] = "$user->firstname";
+                $insertRegistrant['last_name'] = "$user->lastname";
+                $insertRegistrant['registrant_id'] = "$response->registrant_id";
+                $insertRegistrant['start_time'] = "$response->start_time";
+                $insertRegistrant['topic'] = "$response->topic";
+                $insertRegistrant['status'] = 'PENDING';
+                $insertRegistrant['created_at'] = date('Y-m-d H:i:s');
+
+                $DB->insert_record('zoom_meeting_registrant', $insertRegistrant);
 
                 $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $meeting_id AND status = 'PENDING'";
                 $registrantDetails = $DB->get_records_sql($getRegistrantDetails);

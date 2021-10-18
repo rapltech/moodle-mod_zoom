@@ -62,10 +62,18 @@ class add_meeting_registrant extends \core\task\scheduled_task
                 $response = $service->add_meeting_registrants($data->meeting_id, $data->firstname, $data->lastname, $data->email);
                 if (!empty($response)) {
 
-                    $queryToInsertRegistrant = "INSERT INTO `mdl_zoom_meeting_registrant` (meeting_id, email, first_name, last_name, registrant_id, start_time, topic, status, created_at)
-                                                VALUES ($data->meeting_id, '$data->email', '$data->firstname', '$data->lastname', '$response->registrant_id', '$response->start_time', '$response->topic', 'PENDING', now())";
-                    $DB->execute($queryToInsertRegistrant);
+                    $insertRegistrant['meeting_id'] = $data->meeting_id;
+                    $insertRegistrant['email'] = "$data->email";
+                    $insertRegistrant['first_name'] = "$data->firstname";
+                    $insertRegistrant['last_name'] = "$data->lastname";
+                    $insertRegistrant['registrant_id'] = "$response->registrant_id";
+                    $insertRegistrant['start_time'] = "$response->start_time";
+                    $insertRegistrant['topic'] = "$response->topic";
+                    $insertRegistrant['status'] = 'PENDING';
+                    $insertRegistrant['created_at'] = date('Y-m-d H:i:s');
 
+                    $DB->insert_record('zoom_meeting_registrant', $insertRegistrant);
+                    
                     $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $data->meeting_id AND status = 'PENDING'";
                     $registrantDetails = $DB->get_records_sql($getRegistrantDetails);
 
