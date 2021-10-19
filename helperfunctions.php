@@ -6,47 +6,63 @@ require_once($CFG->libdir . '/moodlelib.php');
 require_once(dirname(__FILE__) . '/locallib.php');
 require_once($CFG->dirroot . '/mod/zoom/classes/webservice.php');
 
-function registerUser($enrolledUser, $meeting_id) {
+function registerUser($enrolledUser, $meeting_id, $webinar) {
     global $DB;
     $service = new \mod_zoom_webservice();
-    foreach ($enrolledUser as $user) {
-        try {
-            $response = $service->add_meeting_registrants($meeting_id, $user->firstname, $user->lastname, $user->email);
 
-            if (!empty($response)) {
+    try {
+        $findMeetingOrWebinar = $service->get_meeting_webinar_info($meeting_id, $webinar);
+        if (!empty($findMeetingOrWebinar)) {
+            foreach ($enrolledUser as $user) {
+                $queryToFindIfUserAlreadyRegistered = "SELECT count(*) AS 'noofrecord' FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $meeting_id
+                                                       AND email = '$user->email'";
+                $registeredUser = $DB->get_record_sql($queryToFindIfUserAlreadyRegistered);
 
-                $insertRegistrant['meeting_id'] = $user->meeting_id;
-                $insertRegistrant['email'] = "$user->email";
-                $insertRegistrant['first_name'] = "$user->firstname";
-                $insertRegistrant['last_name'] = "$user->lastname";
-                $insertRegistrant['registrant_id'] = "$response->registrant_id";
-                $insertRegistrant['start_time'] = "$response->start_time";
-                $insertRegistrant['topic'] = "$response->topic";
-                $insertRegistrant['status'] = 'PENDING';
-                $insertRegistrant['created_at'] = date('Y-m-d H:i:s');
-
-                $DB->insert_record('zoom_meeting_registrant', $insertRegistrant);
-
-                $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $meeting_id AND status = 'PENDING'";
-                $registrantDetails = $DB->get_records_sql($getRegistrantDetails);
-
-                $registrants = [];
-                foreach ($registrantDetails as $rData) {
-                    $temp = [
-                        "id" => "$rData->id",
-                        "email" => "$rData->email"
-                    ];
-                    array_push($registrants, $temp);
+                if ($registeredUser->noofrecord == 0) {
+                    try{
+                        $response = $service->add_meeting_registrants($meeting_id, $user->firstname, $user->lastname, $user->email);
+            
+                        if (!empty($response)) {
+    
+                            $insertRegistrant['meeting_id'] = $meeting_id;
+                            $insertRegistrant['email'] = "$user->email";
+                            $insertRegistrant['first_name'] = "$user->firstname";
+                            $insertRegistrant['last_name'] = "$user->lastname";
+                            $insertRegistrant['registrant_id'] = "$response->registrant_id";
+                            $insertRegistrant['start_time'] = "$response->start_time";
+                            $insertRegistrant['topic'] = "$response->topic";
+                            $insertRegistrant['status'] = 'PENDING';
+                            $insertRegistrant['created_at'] = date('Y-m-d H:i:s');
+                            $DB->insert_record('zoom_meeting_registrant', $insertRegistrant);
+            
+                            $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $meeting_id AND status = 'PENDING'";
+                            $registrantDetails = $DB->get_records_sql($getRegistrantDetails);
+            
+                            $registrants = [];
+                            foreach ($registrantDetails as $rData) {
+                                $temp = [
+                                    "id" => "$rData->id",
+                                    "email" => "$rData->email"
+                                ];
+                                array_push($registrants, $temp);
+                            }
+                        } else {
+                            mtrace('API call to add meeting registrant status returned an empty response');
+                        }
+                        
+                    } catch (\moodle_exception $error) {
+                        mtrace('Add meeting registrant status failed: ' . $error);
+                    }
+                } else {
+                    mtrace('User for the given meeting already registered');
                 }
-            } else {
-                 mtrace('API call to add meeting registrant status returned an empty response');
             }
-        } catch (\moodle_exception $error) {
-            mtrace('Add meeting registrant status failed: ' . $error);
+            if(!empty($response)) {
+                updateMeetingRegistrants($service, $DB, $registrants, $meeting_id);
+            }
         }
-    }
-    if(!empty($response)) {
-        updateMeetingRegistrants($service, $DB, $registrants, $meeting_id);
+    }catch (\moodle_exception $error) {
+        mtrace('Requested Meeting or webinar not found: ' . $error);
     }
 }
 
