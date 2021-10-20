@@ -6,12 +6,12 @@ require_once($CFG->libdir . '/moodlelib.php');
 require_once(dirname(__FILE__) . '/locallib.php');
 require_once($CFG->dirroot . '/mod/zoom/classes/webservice.php');
 
-function registerUser($enrolledUser, $meeting_id, $webinar) {
+function registerUser($enrolledUser, $meeting_id, $isWebinar) {
     global $DB;
     $service = new \mod_zoom_webservice();
 
     try {
-        $findMeetingOrWebinar = $service->get_meeting_webinar_info($meeting_id, $webinar);
+        $findMeetingOrWebinar = $service->get_meeting_webinar_info($meeting_id, $isWebinar);
         if (!empty($findMeetingOrWebinar)) {
             foreach ($enrolledUser as $user) {
                 $queryToFindIfUserAlreadyRegistered = "SELECT count(*) AS 'noofrecord' FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $meeting_id
