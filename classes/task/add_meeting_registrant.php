@@ -49,16 +49,15 @@ class add_meeting_registrant extends \core\task\scheduled_task
                     if (!empty($findMeeting)) {
                         $queryToGetMeetingAndStudentDetails = "SELECT u.id, c.id AS 'program_id', mz.meeting_id, u.firstname, u.lastname, u.email
                             FROM mdl_user u
-                                    JOIN mdl_user_enrolments ue ON ue.userid = u.id
-                                    JOIN mdl_enrol e ON e.id = ue.enrolid
+                                    JOIN mdl_user_enrolments ue ON ue.userid = u.id AND ue.status = 0 
+                                    JOIN mdl_enrol e ON e.id = ue.enrolid AND e.status = 0
                                     JOIN mdl_role_assignments ra ON ra.userid = u.id
                                     JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50
                                     JOIN mdl_course c ON c.id = ct.instanceid and e.courseid = c.id
                                     JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student'
-                                    JOIN mdl_zoom mz ON mz.course = c.id
-                            WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0
-                            AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) AND ue.status = 0
-                            AND mz.enable_registration = 1
+                                    JOIN mdl_zoom mz ON mz.course = c.id AND mz.enable_registration = 1
+                            WHERE u.suspended = 0 AND u.deleted = 0
+                            AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) 
                             AND mz.meeting_id = $record->meeting_id
                             AND NOT EXISTS(SELECT 1 FROM
                             mdl_zoom_meeting_registrant zmr
