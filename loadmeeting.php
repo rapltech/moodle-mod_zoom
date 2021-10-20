@@ -87,7 +87,7 @@ if ($userishost) {
                     JOIN mdl_role_assignments ra ON ra.userid = u.id
                     JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50
                     JOIN mdl_course c ON c.id = ct.instanceid AND e.courseid = c.id
-                    JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student'
+                    JOIN mdl_role r ON r.id = ra.roleid
                     JOIN mdl_zoom mz ON mz.course = c.id AND mz.enable_registration = 1
             WHERE u.suspended = 0 AND u.deleted = 0
             AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW()))
