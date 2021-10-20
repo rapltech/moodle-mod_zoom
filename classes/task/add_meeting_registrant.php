@@ -45,8 +45,8 @@ class add_meeting_registrant extends \core\task\scheduled_task
         if (!empty($meetingAndWebinarList)) {
             foreach ($meetingAndWebinarList as $record) {
                 try {
-                    $findMeeting = $service->get_meeting_webinar_info($record->meeting_id, $record->webinar);
-                    if (!empty($findMeeting)) {
+                    $meetingWebinarInfo = $service->get_meeting_webinar_info($record->meeting_id, $record->webinar);
+                    if (!empty($meetingWebinarInfo)) {
                         $queryToGetMeetingAndStudentDetails = "SELECT u.id, c.id AS 'program_id', mz.meeting_id, u.firstname, u.lastname, u.email
                             FROM mdl_user u
                                     JOIN mdl_user_enrolments ue ON ue.userid = u.id AND ue.status = 0 
