@@ -6,25 +6,25 @@ require_once($CFG->libdir . '/moodlelib.php');
 require_once(dirname(__FILE__) . '/locallib.php');
 require_once($CFG->dirroot . '/mod/zoom/classes/webservice.php');
 
-function registerUser($enrolledUser, $meeting_id, $isWebinar) {
+function registerUser($enrolledUser, $meetingID, $isWebinar) {
     global $DB;
     $service = new \mod_zoom_webservice();
 
     try {
-        $findMeetingOrWebinar = $service->get_meeting_webinar_info($meeting_id, $isWebinar);
+        $findMeetingOrWebinar = $service->get_meeting_webinar_info($meetingID, $isWebinar);
         if (!empty($findMeetingOrWebinar)) {
             foreach ($enrolledUser as $user) {
-                $queryToFindIfUserAlreadyRegistered = "SELECT count(*) AS 'noofrecord' FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $meeting_id
+                $queryToFindIfUserAlreadyRegistered = "SELECT count(*) AS 'noofrecord' FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $meetingID
                                                        AND email = '$user->email'";
                 $registeredUser = $DB->get_record_sql($queryToFindIfUserAlreadyRegistered);
 
                 if ($registeredUser->noofrecord == 0) {
                     try{
-                        $response = $service->add_meeting_registrants($meeting_id, $user->firstname, $user->lastname, $user->email);
+                        $response = $service->add_meeting_registrants($meetingID, $user->firstname, $user->lastname, $user->email);
             
                         if (!empty($response)) {
     
-                            $insertRegistrant['meeting_id'] = $meeting_id;
+                            $insertRegistrant['meeting_id'] = $meetingID;
                             $insertRegistrant['email'] = "$user->email";
                             $insertRegistrant['first_name'] = "$user->firstname";
                             $insertRegistrant['last_name'] = "$user->lastname";
@@ -35,7 +35,7 @@ function registerUser($enrolledUser, $meeting_id, $isWebinar) {
                             $insertRegistrant['created_at'] = date('Y-m-d H:i:s');
                             $DB->insert_record('zoom_meeting_registrant', $insertRegistrant);
             
-                            $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $meeting_id AND status = 'PENDING'";
+                            $getRegistrantDetails = "SELECT registrant_id AS 'id', email FROM `mdl_zoom_meeting_registrant` WHERE meeting_id = $meetingID AND status = 'PENDING'";
                             $registrantDetails = $DB->get_records_sql($getRegistrantDetails);
             
                             $registrants = [];
@@ -58,7 +58,7 @@ function registerUser($enrolledUser, $meeting_id, $isWebinar) {
                 }
             }
             if(!empty($response)) {
-                updateMeetingRegistrants($service, $DB, $registrants, $meeting_id);
+                updateMeetingRegistrants($service, $DB, $registrants, $meetingID);
             }
         }
     }catch (\moodle_exception $error) {
@@ -67,7 +67,7 @@ function registerUser($enrolledUser, $meeting_id, $isWebinar) {
 }
 
 
-function updateMeetingRegistrants($service, $DB, $registrants, $meeting_id) {
+function updateMeetingRegistrants($service, $DB, $registrants, $meetingID) {
     if(!empty($registrants)) {
         try {
             $requestPayload = [];
@@ -75,10 +75,10 @@ function updateMeetingRegistrants($service, $DB, $registrants, $meeting_id) {
             $requestPayload["registrants"] = $registrants;
             $requestPayload = json_encode($requestPayload);
            
-            $updateMeetingRegistrantStatus = $service->update_registrants_status($requestPayload, $meeting_id);
+            $updateMeetingRegistrantStatus = $service->update_registrants_status($requestPayload, $meetingID);
 
             if ($updateMeetingRegistrantStatus == 204) {
-                syncRegistrantDetails($service, $DB, $meeting_id);
+                syncRegistrantDetails($service, $DB, $meetingID);
             } else {
                 mtrace('update_registrants_status API returned status code as: ' . $updateMeetingRegistrantStatus);
             }
@@ -91,15 +91,15 @@ function updateMeetingRegistrants($service, $DB, $registrants, $meeting_id) {
     }
 }
 
-function syncRegistrantDetails($service, $DB, $meeting_id) {
+function syncRegistrantDetails($service, $DB, $meetingID) {
     try {
-        $meetingRegistrantList = $service->get_meeting_registrants($meeting_id);
+        $meetingRegistrantList = $service->get_meeting_registrants($meetingID);
         foreach ($meetingRegistrantList->registrants as $data) {
             if ($data->status == "approved") {
                 $join_url = urlencode($data->join_url);
                 $updateStatusAndJoinUrl = "UPDATE `mdl_zoom_meeting_registrant`
                 SET join_url = '$join_url', status = '$data->status'
-                WHERE email = '$data->email' AND meeting_id = $meeting_id";
+                WHERE email = '$data->email' AND meeting_id = $meetingID";
                 $DB->execute($updateStatusAndJoinUrl);
             } else {
                 mtrace("Status returned in get_meeting_registrants api call id: " . $data->status);
