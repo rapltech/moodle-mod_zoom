@@ -82,19 +82,18 @@ if ($userishost) {
             $queryToGetUserDetails = "SELECT DISTINCT(u.id), c.id AS 'program_id',
             u.firstname, u.lastname, u.email
             FROM mdl_user u
-                    JOIN mdl_user_enrolments ue ON ue.userid = u.id
-                    JOIN mdl_enrol e ON e.id = ue.enrolid
+                    JOIN mdl_user_enrolments ue ON ue.userid = u.id AND ue.status = 0
+                    JOIN mdl_enrol e ON e.id = ue.enrolid AND e.status = 0
                     JOIN mdl_role_assignments ra ON ra.userid = u.id
-                    JOIN mdl_context ct ON ct.id = ra.contextid
+                    JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50
                     JOIN mdl_course c ON c.id = ct.instanceid AND e.courseid = c.id
-                    JOIN mdl_role r ON r.id = ra.roleid 
-                    JOIN mdl_zoom mz ON mz.course = c.id
-            WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0
-            AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW())) AND ue.status = 0
+                    JOIN mdl_role r ON r.id = ra.roleid
+                    JOIN mdl_zoom mz ON mz.course = c.id AND mz.enable_registration = 1
+            WHERE u.suspended = 0 AND u.deleted = 0
+            AND (ue.timeend = 0 OR ue.timeend > UNIX_TIMESTAMP(NOW()))
             AND c.id = $course->id
             AND u.id = $USER->id
             AND mz.meeting_id = $zoom->meeting_id
-            AND ct.contextlevel = 50
             AND mz.enable_registration = 1";
             $meetingEnrolledUser = $DB->get_records_sql($queryToGetUserDetails);
 
@@ -105,7 +104,7 @@ if ($userishost) {
             AND user.id = $USER->id";
             $adminList = $DB->get_records_sql($queryToGetSiteAdmin);
             if(!empty($meetingEnrolledUser)) {
-                registerUser($meetingEnrolledUser, $zoom->meeting_id);
+                registerUser($meetingEnrolledUser, $zoom->meeting_id, $zoom->webinar);
                 
                 $queryToFindJoinUrl = "SELECT join_url FROM `mdl_zoom_meeting_registrant` 
                 WHERE email = (SELECT email FROM `mdl_user` WHERE id = $USER->id)
@@ -116,7 +115,7 @@ if ($userishost) {
             }
             
             if(!empty($adminList)) {
-                registerUser($adminList, $zoom->meeting_id);
+                registerUser($adminList, $zoom->meeting_id, $zoom->webinar);
 
                 $queryToFindJoinUrl = "SELECT join_url FROM `mdl_zoom_meeting_registrant` 
                 WHERE email = (SELECT email FROM `mdl_user` WHERE id = $USER->id)
