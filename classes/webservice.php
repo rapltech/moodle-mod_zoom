@@ -128,7 +128,7 @@ class mod_zoom_webservice {
             'iss' => $this->apikey,
             'exp' => time() + 40
         );
-        $token = \Firebase\JWT\JWT::encode($payload, $this->apisecret);
+        $token = \Firebase\JWT\JWT::encode($payload, $this->apisecret, 'HS256');
         $curl->setHeader('Authorization: Bearer ' . $token);
         if ($method != 'get') {
             $curl->setHeader('Content-Type: application/json');
