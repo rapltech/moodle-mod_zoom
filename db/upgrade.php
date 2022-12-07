@@ -386,5 +386,17 @@ function xmldb_zoom_upgrade($oldversion) {
 
         upgrade_mod_savepoint(true, 20210727000, 'zoom');
     }
+
+    if ($oldversion < 20221202000) {
+        $table = new xmldb_table('zoom_recordings');
+        $field = new xmldb_field('hide_recording', XMLDB_TYPE_INTEGER, '1', null);
+
+        // Conditionally launch add hide_recording column
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 20221202000, 'zoom');
+    }
     return true;
 }
