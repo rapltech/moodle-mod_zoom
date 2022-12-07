@@ -661,8 +661,9 @@ function get_zoom_users_from_group($groupingid, $recipient_roles) {
 function get_zoom_meeting_recordings($meeting_id) {
     global $DB;
     return $DB->get_records_sql("SELECT rec.play_url,rec.download_url,
-        rec.status,rec.start_time
+        rec.status,rec.start_time, rec.uuid
         from mdl_zoom_recordings as rec
         where rec.meeting_id = {$meeting_id}
+        AND rec.hide_recording = 0
         ORDER BY rec.start_time DESC");
 }
