@@ -51,7 +51,7 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
             try {
                 $this->disable_download_in_stream($value->meeting_id);
                 $recordings = $service->get_meeting_recording($value->meeting_id);
-                var_dump("recording ==>", $recordings);
+
                 if (!empty($recordings) && !empty($recordings->recording_files[0])) {
 
                     $fetch_existing_recordings = "SELECT id, meeting_id, uuid FROM mdl_zoom_recordings WHERE meeting_id = $recordings->id";
