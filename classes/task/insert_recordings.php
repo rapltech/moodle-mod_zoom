@@ -41,7 +41,7 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
               JOIN mdl_zoom mz on e.instance = mz.id
               WHERE e.modulename = 'zoom'
                 AND mz.deleted_at IS NULL 
-                AND e.endtime < NOW() - interval 1 day";
+                AND FROM_UNIXTIME(e.endtime) BETWEEN NOW() - interval 1 day and NOW()";
 
         $zoom_events = $DB->get_records_sql($sql);
         $service = new \mod_zoom_webservice();
