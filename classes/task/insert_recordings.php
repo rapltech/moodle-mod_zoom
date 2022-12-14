@@ -55,7 +55,6 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
                 $past_meeting = $service->get_past_meeting_instances($value->meeting_id, $value->webinar);
 
                 $uuids = $this->fetchEventUUID($past_meeting);
-                var_dump("uuid ==>", $uuids);
 
                 foreach ($uuids as $uuid) {
                     $recordings = $service->get_meeting_recording($uuid);
