@@ -36,7 +36,7 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
         global $CFG, $DB;
         $config = get_config('mod_zoom');
 
-        $sql = "SELECT e.*, mz.meeting_id, mz.auto_recording 
+        $sql = "SELECT e.*, mz.meeting_id, mz.auto_recording, mz.webinar
               FROM mdl_event as e
               JOIN mdl_zoom mz on e.instance = mz.id
               WHERE e.modulename = 'zoom'
@@ -50,27 +50,39 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
             $zoom_recordings = null;
             try {
                 $this->disable_download_in_stream($value->meeting_id);
-                $recordings = $service->get_meeting_recording($value->meeting_id);
 
-                if (!empty($recordings) && !empty($recordings->recording_files[0])) {
+                // This will return past meeting instances only when those meetings have more than 1 participant
+                $past_meeting = $service->get_past_meeting_instances($value->meeting_id, $value->webinar);
 
-                    $fetch_existing_recordings = "SELECT id, meeting_id, uuid FROM mdl_zoom_recordings WHERE meeting_id = $recordings->id";
+                $uuids = $this->fetchEventUUID($past_meeting);
+                var_dump("uuid ==>", $uuids);
 
-                    $existing_recordings = $DB->get_records_sql($fetch_existing_recordings);
+                foreach ($uuids as $uuid) {
+                    $recordings = $service->get_meeting_recording($uuid);
 
-                    // Get meeting recording from mdl_zoom_recordings
-
-                    $zoom_recordings = $this->insertRecording($recordings, $existing_recordings);
-
-                    if (is_int($zoom_recordings)) {
-                        $DB->update_record('event', (object)['id' => $value->id, 'recording_created' => 1]);
-                        mtrace('Recordings updated for meeting id: ' . $recordings->id . ' and event_id: ' . $value->id);
+                    if (!empty($recordings) && !empty($recordings->recording_files[0])) {
+                        //Get only the first recording file
+                        $rec = $recordings->recording_files[0];
+                        $record = new \stdClass();
+                        $record->meeting_id = $recordings->id;
+                        $record->uuid = $recordings->uuid;
+                        $record->play_url = $rec->play_url;
+                        $record->download_url = $rec->download_url . '?access_token=' . $recordings->download_access_token;
+                        $record->start_time = $rec->recording_start;
+                        $record->end_time = $rec->recording_end;
+                        $record->status = $rec->status;
+                        $zoom_recordings = $DB->insert_record('zoom_recordings', $record);
+                        if (is_int($zoom_recordings)) {
+                            $DB->update_record('event', (object)['id' => $value->id, 'recording_created' => 1]);
+                            mtrace('Recordings updated for event id: '. $recordings->id. ' and uuid: '. $recordings->uuid);
+                        } else {
+                            mtrace('Recordings could not be inserted for event id: '. $value->id. ' and uuid: '. $recordings->uuid);
+                        }
                     } else {
-                        mtrace('Recordings could not be inserted for meeting id: ' . $recordings->id . ' and event_id: ' . $value->id);
+                        mtrace('No recordings found for the meeting_id: '. $value->meeting_id);
                     }
-                } else {
-                    mtrace('No recordings found for the meeting_id: ' . $value->meeting_id);
                 }
+
             } catch (\moodle_exception $error) {
                 mtrace('Recordings could not be updated: ' . $error);
             }
@@ -87,43 +99,18 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
         $service->update_recording_settings($meeting_id, ['viewer_download' => false]);
     }
 
-    private function insertRecording($recordings, $existing_recording)
-    {
-        global $DB;
-        $zoom_recordings = null;
+     /**
+      * @param $completed_events
+      * @param $event
+      * @return mixed
+      */
+     private function fetchEventUUID($completed_events)
+     {
+        $uuid = [];
+         foreach ($completed_events->meetings as $completed_event) {
+             $uuid[] = $completed_event->uuid;
+         }
 
-        if (empty($existing_recording)) {
-            foreach ($recordings->recording_files as $data) {
-                $record = new \stdClass();
-                $record->meeting_id = $recordings->id;
-                $record->uuid = $recordings->uuid;
-                $record->play_url = $data->play_url;
-                $record->download_url = $data->download_url . '?access_token=' . $recordings->download_access_token;
-                $record->start_time = $data->recording_start;
-                $record->end_time = $data->recording_end;
-                $record->status = $data->status;
-
-                $zoom_recordings = $DB->insert_record('zoom_recordings', $record);
-            }
-        } else {
-            foreach ($existing_recording as $data) {
-                foreach ($recordings->recording_files as $rec) {
-                    if (($data->uuid !== $recordings->uuid) && ($data->meeting_id !== $recordings->id)) {
-                        $record = new \stdClass();
-                        $record->meeting_id = $recordings->id;
-                        $record->uuid = $recordings->uuid;
-                        $record->play_url = $rec->play_url;
-                        $record->download_url = $rec->download_url . '?access_token=' . $recordings->download_access_token;
-                        $record->start_time = $rec->recording_start;
-                        $record->end_time = $rec->recording_end;
-                        $record->status = $rec->status;
-
-                        $zoom_recordings = $DB->insert_record('zoom_recordings', $record);
-                    }
-                }
-            }
-        }
-
-        return $zoom_recordings;
-    }
+         return $uuid;
+     }
 }
