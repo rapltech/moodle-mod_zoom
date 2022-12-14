@@ -389,7 +389,7 @@ function xmldb_zoom_upgrade($oldversion) {
 
     if ($oldversion < 20221214000) {
         $table = new xmldb_table('zoom_recordings');
-        $field = new xmldb_field('hide_recording', XMLDB_TYPE_INTEGER, '1',null, null, null, 0);
+        $field = new xmldb_field('hide_recording', XMLDB_TYPE_INTEGER, '1', null, null, null, '0');
 
         // Conditionally launch add hide_recording column
         if (!$dbman->field_exists($table, $field)) {
