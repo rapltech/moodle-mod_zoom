@@ -84,6 +84,8 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
                         } else {
                             mtrace('No recordings found for the meeting_id: '. $value->meeting_id);
                         }
+                    } else {
+                        mtrace('Recording already exist for meeting: '. $value->meeting_id . 'and uuid: '. $uuid);
                     }
                 }
 
