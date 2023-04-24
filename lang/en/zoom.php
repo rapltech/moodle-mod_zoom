@@ -47,6 +47,7 @@ $string['auto_rec_none'] = 'Disabled';
 $string['auto_recording'] = 'Auto Recording';
 $string['view_joinsession'] = 'Join the session';
 $string['view_recording'] = 'Recordings';
+$string['hidden_recording'] = 'Hidden Recording';
 $string['err_recording_not_found'] = 'Sorry, no record found';
 $string['auto_recording_help'] = 'Record on cloud option is only available to pre-authorized Zoom accounts.';
 $string['cachedef_zoomid'] = 'The zoom user id of the user';
