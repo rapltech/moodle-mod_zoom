@@ -24,8 +24,16 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$definitions = array(
-    'zoomid' => array(
-        'mode' => cache_store::MODE_SESSION
-    ),
-);
+$definitions = [
+    'zoomid' => [
+        'mode' => cache_store::MODE_SESSION,
+    ],
+    'zoommeetingsecurity' => [
+        'mode' => cache_store::MODE_APPLICATION,
+    ],
+    'oauth' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => true,
+    ],
+];

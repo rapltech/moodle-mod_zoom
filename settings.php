@@ -51,17 +51,15 @@ if ($ADMIN->fulltree) {
         $settings->add($connectionstatus);
     }
 
-    $apikey = new admin_setting_configtext('mod_zoom/apikey', get_string('apikey', 'mod_zoom'),
-            get_string('apikey_desc', 'mod_zoom'), '', PARAM_ALPHANUMEXT);
-    $settings->add($apikey);
-
-    $apisecret = new admin_setting_configpasswordunmask('mod_zoom/apisecret', get_string('apisecret', 'mod_zoom'),
-            get_string('apisecret_desc', 'mod_zoom'), '');
-    $settings->add($apisecret);
-
-    $zoomurl = new admin_setting_configtext('mod_zoom/zoomurl', get_string('zoomurl', 'mod_zoom'),
-            get_string('zoomurl_desc', 'mod_zoom'), '', PARAM_URL);
-    $settings->add($zoomurl);
+    $accountid = new admin_setting_configtext('zoom/accountid', get_string('accountid', 'mod_zoom'),
+        get_string('accountid_desc', 'mod_zoom'), '', PARAM_ALPHANUMEXT);
+    $settings->add($accountid);
+    $clientid = new admin_setting_configtext('zoom/clientid', get_string('clientid', 'mod_zoom'),
+        get_string('clientid_desc', 'mod_zoom'), '', PARAM_ALPHANUMEXT);
+    $settings->add($clientid);
+    $clientsecret = new admin_setting_configpasswordunmask('zoom/clientsecret', get_string('clientsecret', 'mod_zoom'),
+        get_string('clientsecret_desc', 'mod_zoom'), '');
+    $settings->add($clientsecret);
 
     $jointimechoices = array(0, 5, 10, 15, 20, 30, 45, 60);
     $jointimeselect = array();
@@ -152,4 +150,10 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_configtext('mod_zoom/reminder_time',get_string('remindertime','zoom'),
         get_string('remindertime_desc','zoom'),15,PARAM_INT));
+
+    $defaulttrackingfields = new admin_setting_configtextarea('zoom/defaulttrackingfields',
+        get_string('trackingfields', 'mod_zoom'),
+        get_string('trackingfields_help', 'mod_zoom'), '');
+    $defaulttrackingfields->set_updatedcallback('mod_zoom_update_tracking_fields');
+    $settings->add($defaulttrackingfields);
 }
