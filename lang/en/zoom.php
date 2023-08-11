@@ -25,6 +25,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['accountid'] = 'Zoom account ID';
+$string['accountid_desc'] = '';
 $string['actions'] = 'Actions';
 $string['addtocalendar'] = 'Add to calendar';
 $string['alternative_hosts'] = 'Alternative Hosts';
@@ -32,10 +34,10 @@ $string['alternative_hosts_help'] = 'The alternative host option allows you to s
 $string['allmeetings'] = 'All meetings';
 $string['apikey'] = 'Zoom API key';
 $string['apikey_desc'] = '';
-$string['apisecret'] = 'Zoom API secret';
-$string['apisecret_desc'] = '';
-$string['apiurl'] = 'Zoom API url';
-$string['apiurl_desc'] = '';
+$string['clientid'] = 'Zoom Client ID';
+$string['clientid_desc'] = '';
+$string['clientsecret'] = 'Zoom Client secret';
+$string['clientsecret_desc'] = '';
 $string['attentiveness_score'] = 'Attentiveness score*';
 $string['attentiveness_score_help'] = '*Attentiveness score is lowered when a participant does not have Zoom in focus for more than 30 seconds when someone is sharing a screen.';
 $string['audio_both'] = 'VoIP and Telephony';
@@ -232,6 +234,7 @@ $string['zoomurl'] = 'Zoom home page URL';
 $string['zoomurl_desc'] = '';
 $string['zoom:view'] = 'View Zoom meetings';
 $string['send_zoom_notifications'] = 'Send zoom meeting notifications and reminders';
+$string['zoomerr_no_access_token'] = 'No access token returned';
 
 $string['record_settings'] = 'Recording';
 $string['form_enable_stream_url'] = 'Allow users to view';
@@ -244,6 +247,13 @@ $string['enablestreamurl'] = 'Enable Streaming URL';
 $string['enabledownloadurl'] = 'Enable Download URL';
 $string['enablestreamurl_desc'] = '';
 $string['enabledownloadurl_desc'] = '';
+$string['erroraddinstance'] = 'Could not create new zoom meeting. Invalid options selected for a recurring meeting.';
+$string['errorwebservice_badrequest'] = 'Zoom received a bad request: {$a}';
+$string['errorwebservice_notfound'] = 'The resource does not exists';
+$string['errorwebservice'] = 'Zoom webservice error: {$a}.';
+$string['trackingfields'] = 'Tracking fields';
+$string['trackingfields_help'] = 'Enter the tracking field name(s)/label(s), separated by commas, to enable for Zoom activities.';
+$string['trackingfields_recommendedvalues'] = 'Recommended values: ';
 
 // Email
 $string['msg_header'] = 'Dear {$a},';

@@ -29,6 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot.'/mod/zoom/lib.php');
+require_once($CFG->dirroot . '/mod/zoom/classes/webservice_exception.php');
 require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
 
 // Constants.
@@ -43,6 +44,8 @@ define('ZOOM_RECURRING_MEETING', 3);
 define('ZOOM_RECURRING_MEETING_WITH_FIXED_TIME', 8);
 define('ZOOM_SCHEDULED_WEBINAR', 5);
 define('ZOOM_RECURRING_WEBINAR', 6);
+define('ZOOM_RECURRING_FIXED_MEETING', 8);
+define('ZOOM_RECURRING_FIXED_WEBINAR', 9);
 // Number of meetings per page from zoom's get user report.
 define('ZOOM_DEFAULT_RECORDS_PER_CALL', 30);
 define('ZOOM_MAX_RECORDS_PER_CALL', 300);
@@ -55,6 +58,172 @@ define('ZOOM_USER_TYPE_CORP', 3);
 define('ZOOM_REC_LOCAL', 'local');
 define('ZOOM_REC_CLOUD', 'cloud');
 define('ZOOM_REC_NONE', 'none');
+
+// Auto-recording options.
+define('ZOOM_AUTORECORDING_NONE', 'none');
+define('ZOOM_AUTORECORDING_USERDEFAULT', 'userdefault');
+define('ZOOM_AUTORECORDING_LOCAL', 'local');
+define('ZOOM_AUTORECORDING_CLOUD', 'cloud');
+// Registration options.
+define('ZOOM_REGISTRATION_AUTOMATIC', 0);
+define('ZOOM_REGISTRATION_MANUAL', 1);
+define('ZOOM_REGISTRATION_OFF', 2);
+// Recurrence type options.
+define('ZOOM_RECURRINGTYPE_NOTIME', 0);
+define('ZOOM_RECURRINGTYPE_DAILY', 1);
+define('ZOOM_RECURRINGTYPE_WEEKLY', 2);
+define('ZOOM_RECURRINGTYPE_MONTHLY', 3);
+// Encryption types. String values for Zoom API.
+define('ZOOM_ENCRYPTION_TYPE_ENHANCED', 'enhanced_encryption');
+define('ZOOM_ENCRYPTION_TYPE_E2EE', 'e2ee');
+// Recurring end date options.
+define('ZOOM_END_DATE_OPTION_BY', 1);
+define('ZOOM_END_DATE_OPTION_AFTER', 2);
+// Recurring monthly repeat options.
+define('ZOOM_MONTHLY_REPEAT_OPTION_DAY', 1);
+define('ZOOM_MONTHLY_REPEAT_OPTION_WEEK', 2);
+// API endpoint options.
+define('ZOOM_API_ENDPOINT_EU', 'eu');
+define('ZOOM_API_ENDPOINT_GLOBAL', 'global');
+define('ZOOM_API_URL_EU', 'https://eu01api-www4local.zoom.us/v2/');
+define('ZOOM_API_URL_GLOBAL', 'https://api.zoom.us/v2/');
+
+/**
+ * Entry not found on Zoom.
+ */
+class zoom_not_found_exception extends \mod_zoom\webservice_exception {
+    /**
+     * Constructor
+     * @param string $response      Web service response message
+     * @param int $errorcode     Web service response error code
+     */
+    public function __construct($response, $errorcode) {
+        parent::__construct($response, $errorcode, 'errorwebservice_notfound', 'mod_zoom');
+    }
+}
+
+/**
+ * Bad request received by Zoom.
+ */
+class zoom_bad_request_exception extends \mod_zoom\webservice_exception {
+    /**
+     * Constructor
+     * @param string $response      Web service response message
+     * @param int $errorcode     Web service response error code
+     */
+    public function __construct($response, $errorcode) {
+        parent::__construct($response, $errorcode, 'errorwebservice_badrequest', 'mod_zoom', '', $response);
+    }
+}
+
+/**
+ * Couldn't succeed within the allowed number of retries.
+ */
+class zoom_api_retry_failed_exception extends \mod_zoom\webservice_exception {
+    /**
+     * Constructor
+     * @param string $response      Web service response
+     * @param int $errorcode     Web service response error code
+     */
+    public function __construct($response, $errorcode) {
+        $a = new stdClass();
+        $a->response = $response;
+        $a->maxretries = mod_zoom_webservice::MAX_RETRIES;
+        parent::__construct($response, $errorcode, 'zoomerr_maxretries', 'mod_zoom', '', $a);
+    }
+}
+
+/**
+ * Exceeded daily API limit.
+ */
+class zoom_api_limit_exception extends \mod_zoom\webservice_exception {
+    /**
+     * Unix timestamp of next time to API can be called.
+     * @var int
+     */
+    public $retryafter = null;
+
+    /**
+     * Constructor
+     * @param string $response  Web service response
+     * @param int $errorcode    Web service response error code
+     * @param int $retryafter   Unix timestamp of next time to API can be called.
+     */
+    public function __construct($response, $errorcode, $retryafter) {
+        $this->retryafter = $retryafter;
+
+        $a = new stdClass();
+        $a->response = $response;
+        parent::__construct($response, $errorcode, 'zoomerr_apilimit', 'mod_zoom', '',
+            userdate($retryafter, get_string('strftimedaydatetime', 'core_langconfig')));
+    }
+}
+
+/**
+ * Terminate the current script with a fatal error.
+ *
+ * Adapted from core_renderer's fatal_error() method. Needed because throwing errors with HTML links in them will convert links
+ * to text using htmlentities. See MDL-66161 - Reflected XSS possible from some fatal error messages.
+ *
+ * So need custom error handler for fatal Zoom errors that have links to help people.
+ *
+ * @param string $errorcode The name of the string from error.php to print
+ * @param string $module name of module
+ * @param string $continuelink The url where the user will be prompted to continue.
+ *                             If no url is provided the user will be directed to
+ *                             the site index page.
+ * @param mixed $a Extra words and phrases that might be required in the error string
+ */
+function zoom_fatal_error($errorcode, $module = '', $continuelink = '', $a = null) {
+    global $CFG, $COURSE, $OUTPUT, $PAGE;
+
+    $output = '';
+    $obbuffer = '';
+
+    // Assumes that function is run before output is generated.
+    if ($OUTPUT->has_started()) {
+        // If not then have to default to standard error.
+        throw new moodle_exception($errorcode, $module, $continuelink, $a);
+    }
+
+    $PAGE->set_heading($COURSE->fullname);
+    $output .= $OUTPUT->header();
+
+    // Output message without messing with HTML content of error.
+    $message = '<p class="errormessage">' . get_string($errorcode, $module, $a) . '</p>';
+
+    $output .= $OUTPUT->box($message, 'errorbox alert alert-danger', null, ['data-rel' => 'fatalerror']);
+
+    if ($CFG->debugdeveloper) {
+        if (!empty($debuginfo)) {
+            $debuginfo = s($debuginfo); // Removes all nasty JS.
+            $debuginfo = str_replace("\n", '<br />', $debuginfo); // Keep newlines.
+            $output .= $OUTPUT->notification('<strong>Debug info:</strong> ' . $debuginfo, 'notifytiny');
+        }
+
+        if (!empty($backtrace)) {
+            $output .= $OUTPUT->notification('<strong>Stack trace:</strong> ' . format_backtrace($backtrace), 'notifytiny');
+        }
+
+        if ($obbuffer !== '') {
+            $output .= $OUTPUT->notification('<strong>Output buffer:</strong> ' . s($obbuffer), 'notifytiny');
+        }
+    }
+
+    if (!empty($continuelink)) {
+        $output .= $OUTPUT->continue_button($continuelink);
+    }
+
+    $output .= $OUTPUT->footer();
+
+    // Padding to encourage IE to display our error page, rather than its own.
+    $output .= str_repeat(' ', 512);
+
+    echo $output;
+
+    exit(1); // General error code.
+}
+
 /**
  * Get course/cm/zoom objects from url parameters, and check for login/permissions.
  *
@@ -84,6 +253,31 @@ function zoom_get_instance_setup() {
     require_capability('mod/zoom:view', $context);
 
     return array($course, $cm, $zoom);
+}
+
+/**
+ * Get the configured Zoom API URL.
+ *
+ * @return string The API URL.
+ */
+function zoom_get_api_url() {
+    // Get the API endpoint setting.
+    $apiendpoint = get_config('zoom', 'apiendpoint');
+
+    // Pick the corresponding API URL.
+    switch ($apiendpoint) {
+        case ZOOM_API_ENDPOINT_EU:
+            $apiurl = ZOOM_API_URL_EU;
+            break;
+
+        case ZOOM_API_ENDPOINT_GLOBAL:
+        default:
+            $apiurl = ZOOM_API_URL_GLOBAL;
+            break;
+    }
+
+    // Return API URL.
+    return $apiurl;
 }
 
 /**
@@ -666,4 +860,72 @@ function get_zoom_meeting_recordings($meeting_id) {
         where rec.meeting_id = {$meeting_id}
         AND rec.hide_recording = 0
         ORDER BY rec.start_time DESC");
+}
+
+/**
+ * Helper to get Zoom user settings, efficiently.
+ *
+ * @param string|int $identifier The user's email or the user's ID per Zoom API.
+ * @return stdClass|false If user is found, returns a Zoom user object. Otherwise, returns false.
+ */
+function zoom_get_user_settings($identifier) {
+    static $settings = [];
+
+    if (!isset($settings[$identifier])) {
+        $settings[$identifier] = zoom_webservice()->get_user_settings($identifier);
+    }
+
+    return $settings[$identifier];
+}
+
+/**
+ * Singleton for Zoom webservice class.
+ *
+ * @return \mod_zoom_webservice
+ */
+function zoom_webservice() {
+    static $service;
+
+    if (empty($service)) {
+        $service = new mod_zoom_webservice();
+    }
+
+    return $service;
+}
+
+/**
+ * Helper to get a Zoom user, efficiently.
+ *
+ * @param string|int $identifier The user's email or the user's ID per Zoom API.
+ * @return stdClass|false If user is found, returns a Zoom user object. Otherwise, returns false.
+ */
+function zoom_get_user($identifier) {
+    static $users = [];
+
+    if (!isset($users[$identifier])) {
+        $users[$identifier] = zoom_webservice()->get_user($identifier);
+    }
+
+    return $users[$identifier];
+}
+
+/**
+ * Trim and lower case tracking fields.
+ *
+ * @return array tracking fields trimmed, keys as lower case
+ */
+function zoom_clean_tracking_fields() {
+    $config = get_config('zoom');
+    $defaulttrackingfields = explode(',', $config->defaulttrackingfields);
+    $trackingfields = [];
+
+    foreach ($defaulttrackingfields as $key => $defaulttrackingfield) {
+        $trimmed = trim($defaulttrackingfield);
+        if (!empty($trimmed)) {
+            $key = str_replace(' ', '_', strtolower($trimmed));
+            $trackingfields[$key] = $trimmed;
+        }
+    }
+
+    return $trackingfields;
 }

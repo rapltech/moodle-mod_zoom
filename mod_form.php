@@ -77,9 +77,6 @@ class mod_zoom_mod_form extends moodleform_mod {
 
         // Start of form definition.
         $mform = $this->_form;
-        
-        // Adding program id
-        $mform->addElement('hidden', 'program_id', intval($_GET['course']));
 
         // Adding the "general" fieldset, where all the common settings are showed.
         $mform->addElement('header', 'general', get_string('general', 'form'));
@@ -260,7 +257,7 @@ class mod_zoom_mod_form extends moodleform_mod {
         if ($isnew) {
             // Add webinar, disabled if the user cannot create webinars.
             $webinarattr = null;
-            if ($service->_get_user_settings($zoomuser->id)->feature->webinar) {
+            if ($service->get_user_settings($zoomuser->id)->feature->webinar) {
                 $webinarattr = array('disabled' => true, 'group' => null);
             }
             $mform->addElement('advcheckbox', 'webinar', get_string('webinar', 'zoom'), '');
