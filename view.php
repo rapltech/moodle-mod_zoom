@@ -185,9 +185,8 @@ $table->data[] = array($strautorec, get_string('auto_rec_' . $zoom->auto_recordi
 
 $records = get_zoom_meeting_recordings($zoom->meeting_id);
 if (!empty($records)) {
-    if($zoom->enable_stream_url == 1 && $zoom->enable_download_url == 1){
-        //$table->data[] = array(get_string('view_recording','zoom'));
-        $display = '';
+    $display = '';
+    if($zoom->enable_stream_url == 1 && $zoom->enable_download_url == 1) {
         foreach ($records as $key => $value) {
             $play_urls = $value->play_url;
             $download_urls = $value->download_url;
@@ -200,27 +199,23 @@ if (!empty($records)) {
                 $display .= '|&nbsp;<a target="_self" href="hiderecording.php?id=' . $cm->id . '&meeting_id=' . $zoom->meeting_id . '&play_url=' . $value->play_url . '" onclick="location.reload()">Hide</a>';
             }
         }
-    }
-    $display .= '</br>';
-    $table->data[] = [get_string('view_recording', 'zoom'), $display];
-} else if ($zoom->enable_stream_url == 1) {
-    $display = '';
-    foreach ($records as $key => $value) {
-        $play_urls = $value->play_url;
-        $start_time = $value->start_time;
-        $date = zoom_convert_date_time(strtotime($start_time), 'jS F Y, g:i A') . ' ' . usertimezone();
-        $created_date = date_create($date);
-        $disply_date = date_format($created_date, 'm-d-Y');
-        $display .= '<br>&nbsp;' . $disply_date . '<br>' . '&nbsp;<a target="_blank" href="' . $play_urls . '">View</a>';
-        if ($iszoommanager) {
-            $display .= '| &nbsp; <a target="_self" href="hiderecording.php?id=' . $cm->id . '&meeting_id=' . $zoom->meeting_id . '&play_url=' . $value->play_url . '">Hide</a>';
+        $display .= '</br>';
+        $table->data[] = [get_string('view_recording', 'zoom'), $display];
+    } else if ($zoom->enable_stream_url == 1) {
+        foreach ($records as $key => $value) {
+            $play_urls = $value->play_url;
+            $start_time = $value->start_time;
+            $date = zoom_convert_date_time(strtotime($start_time), 'jS F Y, g:i A') . ' ' . usertimezone();
+            $created_date = date_create($date);
+            $disply_date = date_format($created_date, 'm-d-Y');
+            $display .= '<br>&nbsp;' . $disply_date . '<br>' . '&nbsp;<a target="_blank" href="' . $play_urls . '">View</a>';
+            if ($iszoommanager) {
+                $display .= '| &nbsp; <a target="_self" href="hiderecording.php?id=' . $cm->id . '&meeting_id=' . $zoom->meeting_id . '&play_url=' . $value->play_url . '">Hide</a>';
+            }
         }
-    }
-    $display .= '</br>';
-    $table->data[] = [get_string('view_recording', 'zoom'), $display];
-} else {
-    if ($zoom->enable_download_url == 1) {
-        $display = '';
+        $display .= '</br>';
+        $table->data[] = [get_string('view_recording', 'zoom'), $display];
+    } else if ($zoom->enable_download_url == 1) {
         foreach ($records as $key => $value) {
             $download_urls = $value->download_url;
             $start_time = $value->start_time;
@@ -234,9 +229,9 @@ if (!empty($records)) {
         }
         $display .= '</br>';
         $table->data[] = [get_string('view_recording', 'zoom'), $display];
-    } else {
-        $table->data[] = array(get_string('view_recording', 'zoom'), get_string('err_recording_not_found', 'zoom'));
     }
+} else {
+    $table->data[] = array(get_string('view_recording', 'zoom'), get_string('err_recording_not_found', 'zoom'));
 }
 
 if ($iszoommanager) {
