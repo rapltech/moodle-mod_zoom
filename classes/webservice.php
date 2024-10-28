@@ -264,7 +264,8 @@ class mod_zoom_webservice {
 
                 case 404:
                     throw new zoom_not_found_exception($response->message, $response->code);
-
+                    var_dump("request ==>", $curl, $method, $url, $data);
+                    var_dump("response ==>", $response);
                 case 429:
                     $this->makecallretries += 1;
                     if ($this->makecallretries > self::MAX_RETRIES) {
