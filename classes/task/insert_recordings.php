@@ -91,7 +91,7 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
                 }
 
             } catch (\moodle_exception $error) {
-                mtrace('Recordings could not be updated: ' . $error);
+                mtrace("Recordings could not be updated for meeting_id: {$value->meeting_id} because of the error {$error}");
             }
         }
     }
