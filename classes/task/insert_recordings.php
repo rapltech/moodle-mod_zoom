@@ -41,9 +41,10 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
               JOIN mdl_zoom mz on e.instance = mz.id
               WHERE e.modulename = 'zoom'
                 AND mz.deleted_at IS NULL 
-                AND FROM_UNIXTIME(e.endtime) BETWEEN NOW() - interval 1 day and NOW()";
+                AND FROM_UNIXTIME(e.endtime) BETWEEN NOW() - interval 2 day and NOW()";
 
         $zoom_events = $DB->get_records_sql($sql);
+        var_dump("zoom==>", $zoom_events);
         $service = new \mod_zoom_webservice();
 
         foreach ($zoom_events as $value) {
@@ -53,13 +54,13 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
 
                 // This will return past meeting instances only when those meetings have more than 1 participant
                 $past_meeting = $service->get_past_meeting_instances($value->meeting_id, $value->webinar);
-
+                var_dump("past meetings ==>", $past_meeting);
                 $uuids = $this->fetchEventUUID($past_meeting);
-
+                var_dump("uuids ==>", $uuids);
                 foreach ($uuids as $uuid) {
                     $fetch_existing_recording = "SELECT * FROM mdl_zoom_recordings where uuid = '$uuid' AND meeting_id = $value->meeting_id";
                     $existing_recording = $DB->get_records_sql($fetch_existing_recording);
-
+                    var_dump("existing recording ==>", $existing_recording);
                     if (!$existing_recording) {
                         $recordings = $service->get_meeting_recording($uuid);
 
@@ -90,7 +91,7 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
                 }
 
             } catch (\moodle_exception $error) {
-                mtrace('Recordings could not be updated: ' . $error);
+                mtrace("Recordings could not be updated for meeting_id: {$value->meeting_id} because of the error {$error}");
             }
         }
     }
