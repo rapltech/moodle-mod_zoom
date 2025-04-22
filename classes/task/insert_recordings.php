@@ -41,10 +41,9 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
               JOIN mdl_zoom mz on e.instance = mz.id
               WHERE e.modulename = 'zoom'
                 AND mz.deleted_at IS NULL 
-                AND FROM_UNIXTIME(e.endtime) BETWEEN NOW() - interval 2 day and NOW()";
+                AND FROM_UNIXTIME(e.endtime) BETWEEN NOW() - interval 1 day and NOW()";
 
         $zoom_events = $DB->get_records_sql($sql);
-        var_dump("zoom==>", $zoom_events);
         $service = new \mod_zoom_webservice();
 
         foreach ($zoom_events as $value) {
@@ -54,42 +53,45 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
 
                 // This will return past meeting instances only when those meetings have more than 1 participant
                 $past_meeting = $service->get_past_meeting_instances($value->meeting_id, $value->webinar);
-                var_dump("past meetings ==>", $past_meeting);
-                $uuids = $this->fetchEventUUID($past_meeting);
-                var_dump("uuids ==>", $uuids);
-                foreach ($uuids as $uuid) {
-                    $fetch_existing_recording = "SELECT * FROM mdl_zoom_recordings where uuid = '$uuid' AND meeting_id = $value->meeting_id";
-                    $existing_recording = $DB->get_records_sql($fetch_existing_recording);
-                    var_dump("existing recording ==>", $existing_recording);
-                    if (!$existing_recording) {
-                        $recordings = $service->get_meeting_recording($uuid);
 
-                        if (!empty($recordings) && !empty($recordings->recording_files[0])) {
-                            //Get only the first recording file
-                            $rec = $recordings->recording_files[0];
-                            $record = new \stdClass();
-                            $record->meeting_id = $recordings->id;
-                            $record->uuid = $recordings->uuid;
-                            $record->play_url = $rec->play_url;
-                            $record->download_url = $rec->download_url . '?access_token=' . $recordings->download_access_token;
-                            $record->start_time = $rec->recording_start;
-                            $record->end_time = $rec->recording_end;
-                            $record->status = $rec->status;
-                            $zoom_recordings = $DB->insert_record('zoom_recordings', $record);
-                            if (is_int($zoom_recordings)) {
-                                $DB->update_record('event', (object)['id' => $value->id, 'recording_created' => 1]);
-                                mtrace('Recordings updated for event id: '. $recordings->id. ' and uuid: '. $recordings->uuid);
+                $uuids = $this->fetchEventUUID($past_meeting);
+
+                foreach ($uuids as $uuid) {
+                    try {
+                        $fetch_existing_recording = "SELECT * FROM mdl_zoom_recordings where uuid = '$uuid' AND meeting_id = $value->meeting_id";
+                        $existing_recording = $DB->get_records_sql($fetch_existing_recording);
+
+                        if (!$existing_recording) {
+                            $recordings = $service->get_meeting_recording($uuid);
+
+                            if (!empty($recordings) && !empty($recordings->recording_files[0])) {
+                                //Get only the first recording file
+                                $rec = $recordings->recording_files[0];
+                                $record = new \stdClass();
+                                $record->meeting_id = $recordings->id;
+                                $record->uuid = $recordings->uuid;
+                                $record->play_url = $rec->play_url;
+                                $record->download_url = $rec->download_url . '?access_token=' . $recordings->download_access_token;
+                                $record->start_time = $rec->recording_start;
+                                $record->end_time = $rec->recording_end;
+                                $record->status = $rec->status;
+                                $zoom_recordings = $DB->insert_record('zoom_recordings', $record);
+                                if (is_int($zoom_recordings)) {
+                                    $DB->update_record('event', (object)['id' => $value->id, 'recording_created' => 1]);
+                                    mtrace('Recordings updated for event id: '. $recordings->id. ' and uuid: '. $recordings->uuid);
+                                } else {
+                                    mtrace('Recordings could not be inserted for event id: '. $value->id. ' and uuid: '. $recordings->uuid);
+                                }
                             } else {
-                                mtrace('Recordings could not be inserted for event id: '. $value->id. ' and uuid: '. $recordings->uuid);
+                                mtrace('No recordings found for the meeting_id: '. $value->meeting_id);
                             }
                         } else {
-                            mtrace('No recordings found for the meeting_id: '. $value->meeting_id);
+                            mtrace('Recording already exist for meeting: '. $value->meeting_id . 'and uuid: '. $uuid);
                         }
-                    } else {
-                        mtrace('Recording already exist for meeting: '. $value->meeting_id . 'and uuid: '. $uuid);
+                    } catch (\moodle_exception $error) {
+                        mtrace("Recordings could not be updated for meeting_id: {$value->meeting_id} because of the error {$error}");
                     }
                 }
-
             } catch (\moodle_exception $error) {
                 mtrace("Recordings could not be updated for meeting_id: {$value->meeting_id} because of the error {$error}");
             }
