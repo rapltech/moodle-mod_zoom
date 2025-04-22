@@ -89,7 +89,7 @@ require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
                             mtrace('Recording already exist for meeting: '. $value->meeting_id . 'and uuid: '. $uuid);
                         }
                     } catch (\moodle_exception $error) {
-                        mtrace("Recordings could not be updated for meeting_id: {$value->meeting_id} because of the error {$error}");
+                        mtrace("Recording skipped for uuid: {$uuid} and meeting_id: {$value->meeting_id} because of the error {$error}");
                     }
                 }
             } catch (\moodle_exception $error) {
