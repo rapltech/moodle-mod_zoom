@@ -398,5 +398,23 @@ function xmldb_zoom_upgrade($oldversion) {
 
         upgrade_mod_savepoint(true, 20221214000, 'zoom');
     }
+
+    if ($oldversion < 20250723000) {
+        $table = new xmldb_table('event');
+        $field = new xmldb_field('recording_created', XMLDB_TYPE_INTEGER, '1', null, null, null, '0');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $table = new xmldb_table('event');
+        $field = new xmldb_field('endtime', XMLDB_TYPE_INTEGER, '10', null, null, null);
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 20250723000, 'zoom');
+    }
     return true;
 }
