@@ -20,7 +20,7 @@
 
 define('CLI_SCRIPT', true);
 
-require(__DIR__.'/../../../config.php');
+require(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/clilib.php');
 
 // Now get cli options.
@@ -99,7 +99,7 @@ foreach (keyByMeetingId($events) as $meeting_id => $events) {
     try {
         $completed_meetings = $service->get_past_meeting_instances($meeting_id, $events->webinar);
     } catch (Exception $e) {
-        mtrace('Error while fetching past meetings for meeting id: '. $meeting_id);
+        mtrace('Error while fetching past meetings for meeting id: ' . $meeting_id);
         $trace->output('Exception: ' . $e);
         continue;
     }
@@ -111,53 +111,54 @@ foreach (keyByMeetingId($events) as $meeting_id => $events) {
 
         $trace->output(sprintf('Processing details of event_id: %d', $event->id));
 
-        $uuid = fetchEventUUID($completed_meetings, $event);
+        $uuids = fetchAllEventUUIDs($completed_meetings, $event);
 
-        if (empty($uuid)) {
+        if (empty($uuids)) {
             $trace->output(sprintf('UUID not found for event_id: %d', $event->id));
             $trace->output(sprintf('---------------------------------------------'));
             continue;
         }
 
-        //Check if the recordings exists already
-        if ($DB->get_record('zoom_recordings',
-            array('meeting_id' => $meeting_id,
-                'uuid' => $uuid))
-        ) {
-            $DB->update_record('event', (object)['id' => $event->id, 'recording_created' => 1]);
-            $trace->output(sprintf('Skipping recording update as it already exists for event_id: %d', $event->id));
-            $trace->output(sprintf('---------------------------------------------'));
-            continue;
-        }
-
-        try {
-            $recordings = $service->get_meeting_recording($uuid);
-
-            if (!empty($recordings) && !empty($recordings->recording_files[0])) {
-                //Get only the first recording file
-                $rec = $recordings->recording_files[0];
-                $record = new stdClass();
-                $record->meeting_id = $recordings->id;
-                $record->uuid = $recordings->uuid;
-                $record->play_url = $rec->play_url;
-                $record->download_url = $rec->download_url . '?access_token=' . $recordings->download_access_token;
-                $record->start_time = $rec->recording_start;
-                $record->end_time = $rec->recording_end;
-                $record->status = $rec->status;
-                $zoom_recordings = $DB->insert_record('zoom_recordings', $record);
-                if (is_int($zoom_recordings)) {
-                    $DB->update_record('event', (object)['id' => $event->id, 'recording_created' => 1]);
-                    mtrace('Recordings updated for event id: '. $event->id. ' and uuid: '. $recordings->uuid);
-                } else {
-                    mtrace('Recordings could not be inserted for event id: '. $event->id. ' and uuid: '. $recordings->uuid);
-                }
-            } else {
-                mtrace('No recordings found for the meeting_id: '. $meeting_id);
+        foreach ($uuids as $uuid) {
+            //Check if the recordings exists already
+            if ($DB->get_record('zoom_recordings',
+                array('meeting_id' => $meeting_id,
+                    'uuid' => $uuid))
+            ) {
+                $DB->update_record('event', (object)['id' => $event->id, 'recording_created' => 1]);
+                $trace->output(sprintf('Skipping recording update as it already exists for event_id: %d', $event->id));
+                $trace->output(sprintf('---------------------------------------------'));
+                continue;
             }
-        } catch (\moodle_exception $error) {
-            mtrace('Recordings could not be updated: '. $error);
-        }
 
+            try {
+                $recordings = $service->get_meeting_recording($uuid);
+
+                if (!empty($recordings) && !empty($recordings->recording_files[0])) {
+                    //Get only the first recording file
+                    $rec = $recordings->recording_files[0];
+                    $record = new stdClass();
+                    $record->meeting_id = $recordings->id;
+                    $record->uuid = $recordings->uuid;
+                    $record->play_url = $rec->play_url;
+                    $record->download_url = $rec->download_url . '?access_token=' . $recordings->download_access_token;
+                    $record->start_time = $rec->recording_start;
+                    $record->end_time = $rec->recording_end;
+                    $record->status = $rec->status;
+                    $zoom_recordings = $DB->insert_record('zoom_recordings', $record);
+                    if (is_int($zoom_recordings)) {
+                        $DB->update_record('event', (object)['id' => $event->id, 'recording_created' => 1]);
+                        mtrace('Recordings updated for event id: ' . $event->id . ' and uuid: ' . $recordings->uuid);
+                    } else {
+                        mtrace('Recordings could not be inserted for event id: ' . $event->id . ' and uuid: ' . $recordings->uuid);
+                    }
+                } else {
+                    mtrace('No recordings found for the meeting_id: ' . $meeting_id);
+                }
+            } catch (\moodle_exception $error) {
+                mtrace('Recordings could not be updated: ' . $error);
+            }
+        }
         $trace->output(sprintf('---------------------------------------------'));
     }
 
@@ -183,13 +184,15 @@ function keyByMeetingId(array $events)
  * @param $event
  * @return mixed
  */
-function fetchEventUUID($completed_events, $event)
+function fetchAllEventUUIDs($completed_events, $event)
 {
+    $uuids = [];
+
     foreach ($completed_events->meetings as $completed_event) {
         if (date('Y-m-d', strtotime($completed_event->start_time)) == date('Y-m-d', $event->timestart)) {
-            return $completed_event->uuid;
+            $uuids[] = $completed_event->uuid;
         }
     }
 
-    return '';
+    return $uuids;
 }
