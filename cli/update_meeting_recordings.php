@@ -134,23 +134,33 @@ foreach (keyByMeetingId($events) as $meeting_id => $events) {
             try {
                 $recordings = $service->get_meeting_recording($uuid);
 
-                if (!empty($recordings) && !empty($recordings->recording_files[0])) {
-                    //Get only the first recording file
-                    $rec = $recordings->recording_files[0];
-                    $record = new stdClass();
-                    $record->meeting_id = $recordings->id;
-                    $record->uuid = $recordings->uuid;
-                    $record->play_url = $rec->play_url;
-                    $record->download_url = $rec->download_url . '?access_token=' . $recordings->download_access_token;
-                    $record->start_time = $rec->recording_start;
-                    $record->end_time = $rec->recording_end;
-                    $record->status = $rec->status;
-                    $zoom_recordings = $DB->insert_record('zoom_recordings', $record);
-                    if (is_int($zoom_recordings)) {
-                        $DB->update_record('event', (object)['id' => $event->id, 'recording_created' => 1]);
-                        mtrace('Recordings updated for event id: ' . $event->id . ' and uuid: ' . $recordings->uuid);
+                if (!empty($recordings) && !empty($recordings->recording_files)) {
+                    $all_inserted = true;
+                    foreach ($recordings->recording_files as $rec) {
+                        $record = new stdClass();
+                        $record->meeting_id = $recordings->id;
+                        $record->uuid = $recordings->uuid;
+                        $record->play_url = $rec->play_url;
+                        $record->download_url = $rec->download_url . '?access_token=' . $recordings->download_access_token;
+                        $record->start_time = $rec->recording_start;
+                        $record->end_time = $rec->recording_end;
+                        $record->status = $rec->status;
+
+                        $inserted = $DB->insert_record('zoom_recordings', $record);
+                        if (!is_int($inserted)) {
+                            mtrace("Failed to insert recording for meeting UUID: {$recordings->uuid}");
+                            $all_inserted = false;
+                        }
+                    }
+
+                    if ($all_inserted) {
+                        $DB->update_record('event', (object)[
+                            'id' => $event->id,
+                            'recording_created' => 1
+                        ]);
+                        mtrace("Recordings updated for event ID: {$event->id} and UUID: {$recordings->uuid}");
                     } else {
-                        mtrace('Recordings could not be inserted for event id: ' . $event->id . ' and uuid: ' . $recordings->uuid);
+                        mtrace("Some recordings could not be inserted for event ID: {$event->id} and UUID: {$recordings->uuid}");
                     }
                 } else {
                     mtrace('No recordings found for the meeting_id: ' . $meeting_id);
