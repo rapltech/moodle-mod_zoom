@@ -137,7 +137,7 @@ foreach (keyByMeetingId($events) as $meeting_id => $events) {
                 if (!empty($recordings) && !empty($recordings->recording_files)) {
                     $all_inserted = true;
                     foreach ($recordings->recording_files as $rec) {
-                        $record = new \stdClass();
+                        $record = new stdClass();
                         $record->meeting_id = $recordings->id;
                         $record->uuid = $recordings->uuid;
                         $record->play_url = $rec->play_url;
