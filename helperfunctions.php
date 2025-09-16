@@ -73,15 +73,10 @@ function updateMeetingRegistrants($service, $DB, $registrants, $meetingID) {
             $requestPayload = [];
             $requestPayload["action"] = "approve";
             $requestPayload["registrants"] = $registrants;
-           
-            $updateMeetingRegistrantStatus = $service->update_registrants_status($requestPayload, $meetingID);
 
-            if ($updateMeetingRegistrantStatus == 204) {
-                syncRegistrantDetails($service, $DB, $meetingID);
-            } else {
-                mtrace('update_registrants_status API returned status code as: ' . $updateMeetingRegistrantStatus);
-            }
-            
+            $service->update_registrants_status($requestPayload, $meetingID);
+            syncRegistrantDetails($service, $DB, $meetingID);
+
         } catch (\moodle_exception $error) {
             mtrace('Update registrant status failed: ' . $error);
         }
