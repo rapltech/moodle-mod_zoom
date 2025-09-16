@@ -78,7 +78,7 @@ class add_meeting_registrant extends \core\task\scheduled_task
                                     $insertRegistrant['start_time'] = "$response->start_time";
                                     $insertRegistrant['topic'] = "$response->topic";
                                     $insertRegistrant['status'] = 'PENDING';
-                                    $insertRegistrant['created_at'] = date('Y-m-d H:i:s');
+                                    $insertRegistrant['created_at'] = time();
 
                                     $DB->insert_record('zoom_meeting_registrant', $insertRegistrant);
 
