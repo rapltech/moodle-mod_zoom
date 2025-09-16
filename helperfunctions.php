@@ -73,7 +73,6 @@ function updateMeetingRegistrants($service, $DB, $registrants, $meetingID) {
             $requestPayload = [];
             $requestPayload["action"] = "approve";
             $requestPayload["registrants"] = $registrants;
-            $requestPayload = json_encode($requestPayload);
            
             $updateMeetingRegistrantStatus = $service->update_registrants_status($requestPayload, $meetingID);
 
