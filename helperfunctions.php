@@ -87,7 +87,7 @@ function updateMeetingRegistrants($service, $DB, $registrants, $meetingID) {
 
 function syncRegistrantDetails($service, $DB, $meetingID) {
     try {
-        $meetingRegistrantList = $service->get_meeting_registrants($meetingID);
+        $meetingRegistrantList = $service->get_meeting_registrants($meetingID, '');
         foreach ($meetingRegistrantList->registrants as $data) {
             if ($data->status == "approved") {
                 $join_url = urlencode($data->join_url);
