@@ -416,5 +416,21 @@ function xmldb_zoom_upgrade($oldversion) {
 
         upgrade_mod_savepoint(true, 20250723000, 'zoom');
     }
+
+    if ($oldversion < 20250916100) {
+        $queryToAddUnixColumn = "ALTER TABLE {zoom_meeting_registrant} ADD COLUMN created_at_unix BIGINT(10)";
+        $DB->execute($queryToAddUnixColumn);
+
+        $queryToUpdateExistingValue = "UPDATE {zoom_meeting_registrant} SET created_at_unix = UNIX_TIMESTAMP(created_at)";
+        $DB->execute($queryToUpdateExistingValue);
+
+        $dropColumnOfDatetime = "ALTER TABLE {zoom_meeting_registrant} DROP COLUMN created_at";
+        $DB->execute($dropColumnOfDatetime);
+
+        $updateColumnNameCreatedAt = "ALTER TABLE {zoom_meeting_registrant} CHANGE created_at_unix created_at BIGINT(10) NOT NULL";
+        $DB->execute($updateColumnNameCreatedAt);
+
+        upgrade_mod_savepoint(true, 20250916100, 'zoom');
+    }
     return true;
 }
