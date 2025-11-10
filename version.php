@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_zoom';
-$plugin->version = 20250916100;
-$plugin->release = 'v3.0.1';
+$plugin->version = 20251011000;
+$plugin->release = 'v3.0.2';
 $plugin->requires = 2017051500.00;
 $plugin->maturity = MATURITY_STABLE;
 $plugin->cron = 900; // secs
