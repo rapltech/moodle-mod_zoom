@@ -1085,7 +1085,7 @@ class mod_zoom_webservice {
     public function get_meeting_recording($meeting_id)
     {
         if (preg_match('#^/{1,2}#', $meeting_id)) {
-            $encoded_meeting_id = rawurldecode(rawurldecode($meeting_id));
+            $encoded_meeting_id = rawurlencode(rawurlencode($meeting_id));
         } else {
             $encoded_meeting_id = $meeting_id;
         }
