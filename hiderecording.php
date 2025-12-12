@@ -16,7 +16,7 @@ $download_url = $_REQUEST['download_url'] ?? null;
 
 if (is_null($play_url) || empty($play_url)) {
     $DB->execute(
-            "UPDATE {zoom_recordings} SET hide_recording = 1 WHERE meeting_id = :meeting_id AND download_url = :download_url",
+            "UPDATE mdl_zoom_recordings SET hide_recording = 1 WHERE meeting_id = :meeting_id AND download_url = :download_url",
             ['meeting_id' => $meeting_id, 'download_url' => $download_url]
     );
 } else {
