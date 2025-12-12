@@ -12,10 +12,19 @@ list($course, $cm, $zoom) = zoom_get_instance_setup();
 
 $meeting_id = $_REQUEST['meeting_id'];
 $play_url = $_REQUEST['play_url'] ?? null;
+$download_url = $_REQUEST['download_url'] ?? null;
 
-$unveil_recording = "UPDATE mdl_zoom_recordings SET hide_recording = 0 WHERE meeting_id = $meeting_id AND play_url = '$play_url'";
-$DB->execute($unveil_recording);
-
+if(is_null($play_url) || empty($play_url)) {
+    $DB->execute(
+            "UPDATE {zoom_recordings} SET hide_recording = 0 WHERE meeting_id = :meeting_id AND download_url = :download_url",
+            ['meeting_id' => $meeting_id, 'download_url' => $download_url]
+    );
+} else {
+    $DB->execute(
+            "UPDATE mdl_zoom_recordings SET hide_recording = 0 WHERE meeting_id = $meeting_id AND play_url = :play_url",
+            ['play_url' => $play_url]
+    );
+}
 ?>
 
 <script>

@@ -196,7 +196,7 @@ if (!empty($records)) {
             $disply_date = date_format($created_date, 'm-d-Y');
             $display .= '<br>&nbsp;' . $disply_date . '<br>' . '&nbsp;<a target="_blank" href="' . $play_urls . '">View |</a>&nbsp;<a target="_blank" href="' . $download_urls . '">Download</a> ';
             if ($iszoommanager) {
-                $display .= '|&nbsp;<a target="_self" href="hiderecording.php?id=' . $cm->id . '&meeting_id=' . $zoom->meeting_id . '&play_url=' . $value->play_url . '" onclick="location.reload()">Hide</a>';
+                $display .= '|&nbsp;<a target="_self" href="hiderecording.php?id=' . $cm->id . '&meeting_id=' . $zoom->meeting_id . '&play_url=' . $value->play_url . '&download_url=' . $value->download_url . '" onclick="location.reload()">Hide</a>';
             }
         }
         $display .= '</br>';
@@ -257,7 +257,9 @@ if ($iszoommanager) {
             $date =  zoom_convert_date_time(strtotime($record->start_time), 'jS F Y, g:i A') . ' ' . usertimezone();
             $created_date = date_create($date);
             $display_date = date_format($created_date, 'm-d-Y');
-            $displayHidden .= '<br>&nbsp;'.$display_date.'<br>&nbsp;<a target="_self" href="'.$record->play_url.'">View</a> | &nbsp;<a target="_blank" href="'.$download_urls.'">Download</a> | &nbsp; <a target="_self" href="unveilrecording.php?id='.$cm->id.'&meeting_id='.$zoom->meeting_id .'&play_url='.$record->play_url.'">Unveil</a>';
+            $displayHidden .= '<br>&nbsp;'.$display_date.'<br>&nbsp;<a target="_self" href="'.$record->play_url.'">View</a> | 
+                                   &nbsp;<a target="_blank" href="'.$record->download_url.'">Download</a> | 
+                                   &nbsp; <a target="_self" href="unveilrecording.php?id='.$cm->id.'&meeting_id='.$zoom->meeting_id .'&play_url='.$record->play_url. '&download_url='.$record->download_url.'">Unveil</a>';
         }
 
         $table->data[] = array(get_string('hidden_recording', 'zoom'), $displayHidden);
