@@ -45,6 +45,14 @@ class insert_recordings extends \core\task\scheduled_task
                 AND mz.deleted_at IS NULL 
                 AND FROM_UNIXTIME(e.endtime) BETWEEN NOW() - interval 2 day and NOW()";
 
+        $allowedRecordingType = get_config('mod_zoom', 'recording_file_types');
+
+        if (!empty($allowedtypes) && is_array($allowedtypes)) {
+            $allowedRecordingType = array_keys($allowedtypes);
+        } else {
+            $allowedRecordingType = ['mp4'];
+        }
+
         $zoom_events = $DB->get_records_sql($sql);
         $service = new \mod_zoom_webservice();
 
@@ -69,6 +77,14 @@ class insert_recordings extends \core\task\scheduled_task
                             if (!empty($recordings) && !empty($recordings->recording_files)) {
                                 $all_inserted = true;
                                 foreach ($recordings->recording_files as $rec) {
+
+                                    $fileType = strtolower($rec->file_type ?? '');
+
+                                    if (!in_array($fileType, $allowedRecordingType, true)) {
+                                        mtrace("Skipping recording file type {$fileType} for UUID: {$uuid}");
+                                        continue;
+                                    }
+
                                     $record = new \stdClass();
                                     $record->meeting_id = $recordings->id;
                                     $record->uuid = $recordings->uuid;
@@ -80,7 +96,7 @@ class insert_recordings extends \core\task\scheduled_task
 
                                     $inserted = $DB->insert_record('zoom_recordings', $record);
                                     if (!is_int($inserted)) {
-                                        mtrace("Failed to insert recording for meeting UUID: {$recordings->uuid}");
+                                        mtrace("Failed to insert ${fileType} recording for meeting UUID: {$recordings->uuid}");
                                         $all_inserted = false;
                                     }
                                 }
