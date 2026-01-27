@@ -8,19 +8,19 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$messageproviders = array(
+$messageproviders = [
     // Notify users about session creation.
-    'session_notification' => array(
-        'defaults' => array(
-            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF
-        )
-    ),
+    'session_notification' => [
+        'defaults' => [
+            'email' => MESSAGE_DEFAULT_ENABLED,
+        ],
+    ],
 
-    // Send remainder about the session.
-    'session_reminder' => array(
-        'defaults' => array(
-            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN,
-            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF
-        )
-    )
-);
+    // Send a reminder about the session.
+    'session_reminder' => [
+        'defaults' => [
+            'popup' => MESSAGE_DEFAULT_ENABLED,
+            'email' => MESSAGE_DEFAULT_ENABLED,
+        ],
+    ],
+];
