@@ -45,19 +45,19 @@ class insert_recordings extends \core\task\scheduled_task
                 AND mz.deleted_at IS NULL 
                 AND FROM_UNIXTIME(e.endtime) BETWEEN NOW() - interval 2 day and NOW()";
 
-        $allowedRecordingType = get_config('mod_zoom', 'recording_file_types');
-
-        if (!empty($allowedtypes) && is_array($allowedtypes)) {
-            $allowedRecordingType = array_keys($allowedtypes);
-        } else {
-            $allowedRecordingType = ['mp4'];
+        $allowedRecordingType = ['mp4'];
+        $additionalTypes = get_config('mod_zoom', 'recording_file_types');
+        if (!empty($additionalTypes)) {
+            $additionalTypes = json_decode($additionalTypes, true);
+            if (is_array($additionalTypes)) {
+                $allowedRecordingType = array_merge($allowedRecordingType, array_keys($additionalTypes));
+            }
         }
 
         $zoom_events = $DB->get_records_sql($sql);
         $service = new \mod_zoom_webservice();
 
         foreach ($zoom_events as $value) {
-            $zoom_recordings = null;
             try {
                 $this->disable_download_in_stream($value->meeting_id);
 
@@ -103,12 +103,12 @@ class insert_recordings extends \core\task\scheduled_task
 
                                 if ($all_inserted) {
                                     $DB->update_record('event', (object)[
-                                        'id' => $event->id,
+                                        'id' => $value->id,
                                         'recording_created' => 1
                                     ]);
-                                    mtrace("Recordings updated for event ID: {$event->id} and UUID: {$recordings->uuid}");
+                                    mtrace("Recordings updated for event ID: {$value->id} and UUID: {$recordings->uuid}");
                                 } else {
-                                    mtrace("Some recordings could not be inserted for event ID: {$event->id} and UUID: {$recordings->uuid}");
+                                    mtrace("Some recordings could not be inserted for event ID: {$value->id} and UUID: {$recordings->uuid}");
                                 }
                             } else {
                                 mtrace('Recording already exist for meeting: ' . $value->meeting_id . 'and uuid: ' . $uuid);

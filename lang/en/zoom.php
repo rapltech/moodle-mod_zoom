@@ -255,9 +255,9 @@ $string['trackingfields'] = 'Tracking fields';
 $string['trackingfields_help'] = 'Enter the tracking field name(s)/label(s), separated by commas, to enable for Zoom activities.';
 $string['trackingfields_recommendedvalues'] = 'Recommended values: ';
 
-$string['recordingfiletypes'] = 'Zoom recording file types to store';
+$string['recordingfiletypes'] = 'Additional Zoom recording file types to store';
 $string['recordingfiletypes_desc'] =
-    'Select which Zoom recording file types should be downloaded and stored when fetching recordings.';
+	'Select additional Zoom recording file types to download and store when fetching recordings. Note: MP4 video recordings are always fetched and stored automatically.';
 
 $string['recordingtype_video'] = 'Video recordings (MP4)';
 $string['recordingtype_audio'] = 'Audio-only recordings (M4A)';

@@ -95,12 +95,14 @@ $service = new mod_zoom_webservice();
  * Allowed recording file types (admin setting)
  * ---------------------------------------------------------
  */
-$allowedtypes = get_config('mod_zoom', 'recording_file_types');
 
-if (empty($allowedtypes)) {
-    $allowedtypes = ['mp4'];
-} else {
-    $allowedtypes = array_map('strtolower', array_keys($allowedtypes));
+$allowedtypes = ['mp4'];
+$additionalTypes = get_config('mod_zoom', 'recording_file_types');
+if (!empty($additionalTypes)) {
+    $additionalTypes = json_decode($additionalTypes, true);
+    if (is_array($additionalTypes)) {
+        $allowedtypes = array_merge($allowedtypes, array_map('strtolower', array_keys($additionalTypes)));
+    }
 }
 
 $trace->output('Allowed recording file types: ' . implode(', ', $allowedtypes));
