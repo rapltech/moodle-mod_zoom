@@ -23,20 +23,20 @@ define('CLI_SCRIPT', true);
 require(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/clilib.php');
 
-// Now get cli options.
+// CLI options.
 list($options, $unrecognized) = cli_get_params(
-    array(
+    [
         'help' => false,
         'meeting_id' => false,
-    ),
-    array(
-        'h' => 'help'
-    )
+    ],
+    [
+        'h' => 'help',
+        'm' => 'meeting_id',
+    ]
 );
 
 if ($unrecognized) {
-    $unrecognized = implode("\n  ", $unrecognized);
-    cli_error(get_string('cliunknowoption', 'admin', $unrecognized));
+    cli_error(get_string('cliunknowoption', 'admin', implode("\n  ", $unrecognized)));
 }
 
 if ($options['help']) {
@@ -64,13 +64,11 @@ if (!empty($options['meeting_id'])) {
                 AND mz.deleted_at IS NULL 
                 AND mz.meeting_id = ?
               AND e.endtime < UNIX_TIMESTAMP(NOW())";
-
     try {
-        $events = $DB->get_records_sql($sql, array($options['meeting_id']));
+        $events = $DB->get_records_sql($sql, [$options['meeting_id']]);
     } catch (Exception $e) {
         $trace->output('Exception: ' . $e->getMessage(), 1);
     }
-
 } else {
     $sql = "SELECT e.*, mz.meeting_id, mz.auto_recording, mz.webinar 
               FROM mdl_event as e
@@ -90,7 +88,24 @@ if (empty($events)) {
     cli_error('No meetings found to update.');
 }
 
-$service = new \mod_zoom_webservice();
+$service = new mod_zoom_webservice();
+
+/**
+ * ---------------------------------------------------------
+ * Allowed recording file types (admin setting)
+ * ---------------------------------------------------------
+ */
+
+$allowedtypes = ['mp4'];
+$additionalTypes = get_config('mod_zoom', 'recording_file_types');
+if (!empty($additionalTypes)) {
+    $additionalTypes = json_decode($additionalTypes, true);
+    if (is_array($additionalTypes)) {
+        $allowedtypes = array_merge($allowedtypes, array_map('strtolower', array_keys($additionalTypes)));
+    }
+}
+
+$trace->output('Allowed recording file types: ' . implode(', ', $allowedtypes));
 
 foreach (keyByMeetingId($events) as $meeting_id => $events) {
 
@@ -120,35 +135,54 @@ foreach (keyByMeetingId($events) as $meeting_id => $events) {
         }
 
         foreach ($uuids as $uuid) {
-            //Check if the recordings exists already
-            if ($DB->get_record('zoom_recordings',
-                array('meeting_id' => $meeting_id,
-                    'uuid' => $uuid))
-            ) {
-                $DB->update_record('event', (object)['id' => $event->id, 'recording_created' => 1]);
-                $trace->output(sprintf('Skipping recording update as it already exists for event_id: %d', $event->id));
-                $trace->output(sprintf('---------------------------------------------'));
-                continue;
-            }
 
             try {
+                if ($DB->get_record('zoom_recordings', [
+                    'meeting_id' => $meeting_id,
+                    'uuid' => $uuid
+                ])) {
+                    $DB->update_record('event', (object)[
+                        'id' => $event->id,
+                        'recording_created' => 1
+                    ]);
+                    $trace->output(sprintf('Skipping recording update as it already exists for event_id: %d', $event->id));
+                    $trace->output(sprintf('---------------------------------------------'));
+                    continue;
+                }
+
                 $recordings = $service->get_meeting_recording($uuid);
 
                 if (!empty($recordings) && !empty($recordings->recording_files)) {
+
                     $all_inserted = true;
+
                     foreach ($recordings->recording_files as $rec) {
+
+                        $filetype = strtolower($rec->file_type ?? '');
+
+                        if (!in_array($filetype, $allowedtypes, true)) {
+                            $trace->output(
+                                "Skipping {$filetype} recording for uuid: {$uuid}",
+                                1
+                            );
+                            continue;
+                        }
+
                         $record = new stdClass();
                         $record->meeting_id = $recordings->id;
                         $record->uuid = $recordings->uuid;
-                        $record->play_url = $rec->play_url;
-                        $record->download_url = $rec->download_url . '?access_token=' . $recordings->download_access_token;
-                        $record->start_time = $rec->recording_start;
-                        $record->end_time = $rec->recording_end;
-                        $record->status = $rec->status;
+                        $record->play_url = $rec->play_url ?? null;
+                        $record->download_url =
+                            $rec->download_url . '?access_token=' . $recordings->download_access_token;
+                        $record->start_time = $rec->recording_start ?? null;
+                        $record->end_time = $rec->recording_end ?? null;
+                        $record->status = $rec->status ?? null;
+                        $record->file_type = $filetype;
 
                         $inserted = $DB->insert_record('zoom_recordings', $record);
+
                         if (!is_int($inserted)) {
-                            mtrace("Failed to insert recording for meeting UUID: {$recordings->uuid}");
+                            mtrace("Failed to insert {$filetype} recording for uuid: {$uuid}");
                             $all_inserted = false;
                         }
                     }
@@ -158,21 +192,31 @@ foreach (keyByMeetingId($events) as $meeting_id => $events) {
                             'id' => $event->id,
                             'recording_created' => 1
                         ]);
-                        mtrace("Recordings updated for event ID: {$event->id} and UUID: {$recordings->uuid}");
+                        mtrace(
+                            "Recordings updated for event_id: {$event->id} and uuid: {$uuid}"
+                        );
                     } else {
-                        mtrace("Some recordings could not be inserted for event ID: {$event->id} and UUID: {$recordings->uuid}");
+                        mtrace(
+                            "Some recordings could not be inserted for event_id: {$event->id} and uuid: {$uuid}"
+                        );
                     }
+
                 } else {
-                    mtrace('No recordings found for the meeting_id: ' . $meeting_id);
+                    mtrace(
+                        "No recordings found for meeting_id: {$meeting_id} and uuid: {$uuid}"
+                    );
                 }
-            } catch (\moodle_exception $error) {
-                mtrace('Recordings could not be updated: ' . $error);
+
+            } catch (moodle_exception $error) {
+                mtrace(
+                    "Recording skipped for uuid: {$uuid} and meeting_id: {$meeting_id} " .
+                    "because of error: {$error->getMessage()}"
+                );
             }
         }
-        $trace->output(sprintf('---------------------------------------------'));
-    }
 
-    $trace->output(sprintf('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'));
+        $trace->output('---------------------------------------------');
+    }
 }
 
 /**

@@ -155,5 +155,24 @@ if ($ADMIN->fulltree) {
         get_string('trackingfields', 'mod_zoom'),
         get_string('trackingfields_help', 'mod_zoom'), '');
     $defaulttrackingfields->set_updatedcallback('mod_zoom_update_tracking_fields');
+
+    $options = [
+        'm4a' => get_string('recordingtype_audio', 'mod_zoom'),
+        'txt' => get_string('recordingtype_chat', 'mod_zoom'),
+        'vtt' => get_string('recordingtype_cc', 'mod_zoom')
+    ];
+
+
+    $recordingsetting = new admin_setting_configmulticheckbox(
+        'mod_zoom/recording_file_types',
+        get_string('recordingfiletypes', 'mod_zoom'),
+        get_string('recordingfiletypes_desc', 'mod_zoom'),
+        [],
+        $options
+    );
+
+    $settings->add($recordingsetting);
+
+
     $settings->add($defaulttrackingfields);
 }
